@@ -20,12 +20,10 @@ public class Metrica {
     }
 
     public void mostrarResultados() {
-        System.out.println("====== METRICAS ======");
         System.out.println("Tiempo promedio de espera: " + tiempoPromedioEspera + " s");
         System.out.println("Vehículos procesados: " + vehiculosProcesados);
         System.out.println("Embotellamientos reducidos: " + embotellamientosReducidos);
         System.out.println("Consumo de energía estimado: " + consumoEnergia);
-        System.out.println("======================");
     }
 
     // Setters para que Trafico pueda poblar la métrica

@@ -2,13 +2,12 @@
 public class Vehiculo{
     //Atributos
     private final String idVehiculo;
-    private TipoVehiculo tipo;              // Podemos agregar ENUM del tipo de vehículos
+    private TipoVehiculo tipo;              
     private int velocidad;             
-    private int tiempoAparicion;            // Momento en que aparece en la simulación
-    private String idInterseccionDestino;   // Identificador de la intersección de destino
-    private double posicion;                // distancia recorrida en metros
-    private double tiempoEspera;            // acumulado en segundos
-
+    private int tiempoAparicion;            
+    private String idInterseccionDestino;   
+    private double posicion;                
+    private double tiempoEspera;            
 
 
     

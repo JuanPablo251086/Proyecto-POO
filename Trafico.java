@@ -29,7 +29,7 @@ public class Trafico {
             int flujo = inter.obtenerFlujo();
             int tiempoVerde = Math.min(60, 10 + flujo * 2);
             int tiempoAmarillo = 3;
-            int tiempoRojo = tiempoVerde + tiempoAmarillo; // simple balance
+            int tiempoRojo = tiempoVerde + tiempoAmarillo;
             Semaforo s = inter.getSemaforoPrincipal();
             if (s != null) {
                 s.setDuraciones(tiempoVerde, tiempoAmarillo, tiempoRojo);
@@ -51,12 +51,12 @@ public class Trafico {
         }
 
         double promEspera = interCount == 0 ? 0.0 : (totalVehiculos / (double) Math.max(1, interCount));
-        double consumo = sumaVerde * 0.1; // estimación arbitraria
+        double consumo = sumaVerde * 0.1; 
 
         m.setVehiculosProcesados(totalVehiculos);
         m.setTiempoPromedioEspera(promEspera);
         m.setConsumoEnergia(consumo);
-        m.setEmbotellamientosReducidos(0); // sin histórico, 0 por ahora
+        m.setEmbotellamientosReducidos(0); 
         return m;
     }
 
