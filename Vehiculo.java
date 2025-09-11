@@ -1,12 +1,4 @@
 
-
-/*
-Programación Orientada a Objetos
-Proyecto: Sistema de Semáforos Inteligentes
-Clase: Vehículo 
-Descripción: Representa el comportamiento de un vehículo que pasa por una intersección.
-*/ 
-
 public class Vehiculo{
     //Atributos
     private final String idVehiculo;
