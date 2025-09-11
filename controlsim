@@ -43,7 +43,6 @@ public class ControlSim {
             System.err.println("ControlSim: error al inicializar trafico -> " + e.getMessage());
         }
 
-        // Actualizar la vista para mostrar estado inicial
         actualizarVista();
     }
 
@@ -57,7 +56,6 @@ public class ControlSim {
         }
         simulacionActiva = false;
         System.out.println("ControlSim: simulación pausada.");
-        // Si corresponde, solicitar a la vista que muestre un mensaje/estado pausado
     }
 
     /**
@@ -73,7 +71,6 @@ public class ControlSim {
             // Mostrar mapa base
             vista.mostrarMapa();
 
-            // Mostrar vehiculos y semaforos (si esas funciones existen)
             vista.mostrarVehiculos();
             vista.mostrarSemaforos();
 
