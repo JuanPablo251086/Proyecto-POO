@@ -16,17 +16,31 @@ public class Interseccion {
     }
 
     // Métodos 
+    /**
+     * Actualiza los sensores de la intersección.
+     * Implementación simple: simula incremento aleatorio en cada sensor (0-5 vehículos).
+     */
     public void actualizarSensores() {
-        // falta implementar actualización de sensores
+        Random rnd = new Random();
+        for (Sensor s : listaSensores) {
+            int incremento = rnd.nextInt(6); // 0..5
+            s.actualizarConteo(incremento);
+        }
     }
 
+    /**
+     * Obtiene el flujo total detectado por los sensores (suma de conteos).
+     */
     public int obtenerFlujo() {
-        // falta calcular flujo real con sensores
-        return 0;
+        int total = 0;
+        for (Sensor s : listaSensores) {
+            total += s.getConteoVehiculosDetectados();
+        }
+        return total;
     }
 
     public Semaforo getSemaforoPrincipal() {
-        // falta retornar semáforo principal
+        // retorna el primer semáforo si existe
         return listaSemaforos.isEmpty() ? null : listaSemaforos.get(0);
     }
 
@@ -36,6 +50,23 @@ public class Interseccion {
 
     public String getNombre() {
         return nombreInterseccion;
+    }
+
+    // métodos utilitarios para añadir semáforos y sensores
+    public void addSemaforo(Semaforo s) {
+        if (s != null) listaSemaforos.add(s);
+    }
+
+    public void addSensor(Sensor s) {
+        if (s != null) listaSensores.add(s);
+    }
+
+    public List<Semaforo> getListaSemaforos() {
+        return Collections.unmodifiableList(listaSemaforos);
+    }
+
+    public List<Sensor> getListaSensores() {
+        return Collections.unmodifiableList(listaSensores);
     }
 
     public String toString() {
