@@ -1,80 +1,48 @@
-import java.util.*;
-
-public class Interseccion {
-    // Atributos 
-    private int idInter;
-    private String nombreInterseccion;
-    private List<Semaforo> listaSemaforos;
-    private List<Sensor> listaSensores;
-
-    // Constructor
-    public Interseccion(int idInter, String nombreInterseccion) {
-        this.idInter = idInter;
-        this.nombreInterseccion = nombreInterseccion;
-        this.listaSemaforos = new ArrayList<>();
-        this.listaSensores = new ArrayList<>();
+import java.util.ArrayList;
+public class Interseccion
+{
+    private int row, col;
+    private float weight;
+    private ArrayList<Arista> vecinos;
+    public Interseccion(int r, int c)
+    {
+        this.row = r;
+        this.col = c;
+        this.vecinos = new ArrayList<Arista>();
     }
 
-    // Métodos 
-    /**
-     * Actualiza los sensores de la intersección.
-     * Implementación simple: simula incremento aleatorio en cada sensor (0-5 vehículos).
-     */
-    public void actualizarSensores() {
-        Random rnd = new Random();
-        for (Sensor s : listaSensores) {
-            int incremento = rnd.nextInt(6); // 0..5
-            s.actualizarConteo(incremento);
-        }
-    }
-
-    /**
-     * Obtiene el flujo total detectado por los sensores (suma de conteos).
-     */
-    public int obtenerFlujo() {
-        int total = 0;
-        for (Sensor s : listaSensores) {
-            total += s.getConteoVehiculosDetectados();
-        }
-        return total;
-    }
-
-    public Semaforo getSemaforoPrincipal() {
-        // retorna el primer semáforo si existe
-        return listaSemaforos.isEmpty() ? null : listaSemaforos.get(0);
-    }
-
-    public int getId() {
-        return idInter;
-    }
-
-    public String getNombre() {
-        return nombreInterseccion;
-    }
-
-    // métodos utilitarios para añadir semáforos y sensores
-    public void addSemaforo(Semaforo s) {
-        if (s != null) listaSemaforos.add(s);
-    }
-
-    public void addSensor(Sensor s) {
-        if (s != null) listaSensores.add(s);
-    }
-
-    public List<Semaforo> getListaSemaforos() {
-        return Collections.unmodifiableList(listaSemaforos);
-    }
-
-    public List<Sensor> getListaSensores() {
-        return Collections.unmodifiableList(listaSensores);
-    }
-
+    @Override
     public String toString() {
-        return "Interseccion{" +
-                "idInter=" + idInter +
-                ", nombreInterseccion='" + nombreInterseccion + '\'' +
-                ", listaSemaforos=" + listaSemaforos +
-                ", listaSensores=" + listaSensores +
-                '}';
+        return "(" + this.row + "," + this.col + "," + this.weight + ")";
+    }
+    public int[] CalcularVecinos() {
+
+    // Vecino vertical
+    int vrow = (this.col % 2 == 1) ? this.row - 1 : this.row + 1;
+    int vcol = this.col;
+    if (vrow < 1 || vrow > Main.maxR || vcol < 1 || vcol > Main.maxC) {
+        vrow = 0;
+        vcol = 0;
+    }
+
+    // Vecino horizontal
+    int hrow = this.row;
+    int hcol = (this.row % 2 == 1) ? this.col + 1 : this.col - 1;
+    if (hrow < 1 || hrow > Main.maxR || hcol < 1 || hcol > Main.maxC) {
+        hrow = 0;
+        hcol = 0;
+    }
+
+    return new int[]{vrow, vcol, hrow, hcol};
+}
+
+    
+    public void anadirvecinos(Interseccion to)
+    {
+        vecinos.add(new Arista(this,to));
+    }
+    public ArrayList<Arista> getVecinos()
+    {
+        return this.vecinos;
     }
 }
