@@ -1,19 +1,15 @@
-public class Main {
-    public static void main(String[] args) {
-        Trafico trafico = new Trafico(null); // sin algoritmo personalizado
-        Interseccion i1 = new Interseccion(1, "Central");
-        i1.addSensor(new Sensor(1));
-        i1.addSensor(new Sensor(2));
-        i1.addSemaforo(new Semaforo("ROJO", 10, 3, 13));
-        trafico.addInterseccion(i1);
+public class Main
+{
+    public static int maxR = 5;
+    public static int maxC = 5;
 
-        Simulacion sim = new Simulacion();
-        ControlSim cs = new ControlSim(trafico, sim);
-        ControlUs cu = new ControlUs(cs);
+    public static void main(String[] args)
+{
+    Controller controlador = new Controller(maxR, maxC);
+    controlador.inicializarintersecciones();
 
-        cu.detectarEvento("INICIAR");
-        cu.detectarEvento("STEP");
-        Metrica m = trafico.obtenerMetricas();
-        m.mostrarResultados();
-    }
+    Interseccion inter = controlador.getInterseccion(3,3);
+    int[] vecinos = inter.CalcularVecinos();
+    controlador.printallvecinosynodos();
+}
 }
