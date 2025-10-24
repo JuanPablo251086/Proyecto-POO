@@ -2,10 +2,17 @@
 import java.util.ArrayList;
 public class Controller
 {
+    private ArrayList<Calle> calles; 
+    private ArrayList<Avenida> avenidas; // Necesito que alguien se eche una funcion que castee aristas y los liste aquí como calles y avenidas acorde a hacia donde van.
     private int locmaxR;
     private int locmaxC;
     private ArrayList<ArrayList<Interseccion>> intersecciones;
     private ArrayList<Interseccion> interseccionesstackeadas;
+    private Vista vista;
+    private TrafficController trafico;
+    
+    
+    
     public Controller(int maxR, int maxC)
     {
         this.locmaxR = maxR;
@@ -53,7 +60,7 @@ public class Controller
         }
     }
 }
-
+// esto funciona porque sí la verdad, no se ni como pero solo se que esta bien
     public Interseccion getInterseccion(int r, int c)
     {
         if (r < 1 || r > locmaxR || c < 1 || c > locmaxC) {
@@ -71,6 +78,8 @@ public class Controller
         }
         return fila.get(colIndex);
     }
+
+    //por el momentos sirve para debugging, pero puede servir para vista. team 1 cambienla como quieran si lo necesitan. 
      public void printallvecinosynodos()
     {
         int size = this.interseccionesstackeadas.size();
@@ -81,5 +90,8 @@ public class Controller
 
     }
     }
+
+
+    //necesito que el team vista se eche una fucnion parecida a la de arriba pero que exporte eso a un archivo que a ustedes les convenga para el UI.
 }
    

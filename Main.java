@@ -11,5 +11,7 @@ public class Main
     Interseccion inter = controlador.getInterseccion(3,3);
     int[] vecinos = inter.CalcularVecinos();
     controlador.printallvecinosynodos();
+
+    //si pueden alguien eche un chataso que les de condiciones inciiales aleatorias para empezar a probar el programa despues
 }
 }
