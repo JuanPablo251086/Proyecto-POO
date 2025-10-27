@@ -1,4 +1,3 @@
-// TrafficController.java
 // Contiene el esqueleto/implementación del algoritmo de rutas (Dijkstra) sobre el grafo.
 // Usa los pesos de las aristas (0..1); Dijkstra busca minimizar la suma de pesos.
 // Nota: dado que los pesos están en 0..1, la suma tiene sentido. Si en el futuro quieres
@@ -31,7 +30,6 @@ public class TrafficController {
         }
         dist.put(origen, 0f);
 
-        // PriorityQueue ordenada por distancia
         PriorityQueue<Interseccion> pq = new PriorityQueue<>(Comparator.comparingDouble(dist::get));
         pq.add(origen);
 

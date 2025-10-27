@@ -1,8 +1,3 @@
-// Interseccion.java
-// Modifiqué la firma de añadir vecinos para aceptar Arista (las aristas serán creadas por Controller).
-// Añadí equals/hashCode basados en (row,col) para usar en mapas/sets.
-// Añadí getters/setters para row/col/weight.
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

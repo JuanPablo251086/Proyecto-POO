@@ -1,9 +1,3 @@
-// Arista.java
-// Clase base para aristas (calles/avenidas).
-// Implementa cálculo de peso básico usando vehiculosPorMin y weightMultiplier.
-// Peso normalizado entre 0 y 1.
-// Nota: MAX_VEH_PER_MIN es la normalización (asumí 100 vehículos/min como máximo razonable).
-
 public class Arista {
     protected Interseccion from;
     protected Interseccion to;

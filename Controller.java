@@ -1,11 +1,3 @@
-// Controller.java
-// Controller central: administra intersecciones y crea aristas adecuadas (Calle/Avenida).
-// - Mantiene listas de calles/avenidas/allAristas.
-// - Añade aristas en ambas direcciones (bidireccional) para simplificar.
-// - Inicializa pesos aleatorios con inicializarAristasYPesosAleatorios().
-// - printallvecinosynodos() ahora imprime aristas por intersección.
-// - Proporciona accesso a TrafficController (que usa estas aristas para rutas).
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
