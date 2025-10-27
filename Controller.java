@@ -50,7 +50,7 @@ public class Controller {
             }
         }
 
-        // Crear aristas entre vecinos (bidireccional)
+        //QUE es esto????
         for (int r = 1; r <= locmaxR; r++) {
             for (int c = 1; c <= locmaxC; c++) {
                 Interseccion inter = getInterseccion(r, c);
@@ -64,13 +64,12 @@ public class Controller {
                         // Aquí: vertical => columna igual => Avenida
                         if (!existeArista(inter, vecinoV)) {
                             Avenida a1 = new Avenida(inter, vecinoV);
-                            Avenida a2 = new Avenida(vecinoV, inter);
+                            //Avenida a2 = new Avenida(vecinoV, inter); elimine este comportamiento que estaba causando el BUG
                             inter.anadirArista(a1);
-                            vecinoV.anadirArista(a2);
                             avenidas.add(a1);
-                            avenidas.add(a2);
+
                             allAristas.add(a1);
-                            allAristas.add(a2);
+
                         }
                     }
                 }
@@ -81,13 +80,10 @@ public class Controller {
                     if (vecinoH != null) {
                         if (!existeArista(inter, vecinoH)) {
                             Calle c1 = new Calle(inter, vecinoH);
-                            Calle c2 = new Calle(vecinoH, inter);
                             inter.anadirArista(c1);
-                            vecinoH.anadirArista(c2);
                             calles.add(c1);
-                            calles.add(c2);
                             allAristas.add(c1);
-                            allAristas.add(c2);
+                        
                         }
                     }
                 }
@@ -95,7 +91,6 @@ public class Controller {
         }
     }
 
-    // Verifica si ya existe arista entre a->b para evitar duplicados
     private boolean existeArista(Interseccion a, Interseccion b) {
         for (Arista ar : a.getVecinos()) {
             if (ar.getTo().equals(b)) return true;
