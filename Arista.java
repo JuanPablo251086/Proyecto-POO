@@ -1,28 +1,69 @@
-public class Arista
-{
+// Arista.java
+// Clase base para aristas (calles/avenidas).
+// Implementa cálculo de peso básico usando vehiculosPorMin y weightMultiplier.
+// Peso normalizado entre 0 y 1.
+// Nota: MAX_VEH_PER_MIN es la normalización (asumí 100 vehículos/min como máximo razonable).
+
+public class Arista {
     protected Interseccion from;
     protected Interseccion to;
-    protected float weight;
+    protected float weight; // 0..1 (0 = libre, 1 = muy congestionada)
+    protected int vehiculosPorMin; // valor actual de vehículos por minuto en esa arista
 
-    //TODO
-    protected int vehiculospormin; //le estabamos dando demasiado enfoque a diferentes tipos de vehiculos, pero eso sobrecomplica el diseño. Mejor dejemoslo como solo un numero correspondiente a cada calle, representado un promedio digamos que de carros por minuto que circulan.
-    //en si la idea es que sirva para caluclar el peso, que es lo que nos importa para esta clase relamente. 
+    // Constante para normalizar (asunción): máximo veh/min para mapear a 1.0
+    public static final int MAX_VEH_PER_MIN = 100;
 
+    protected float weightMultiplier = 1.0f; // por defecto 1.0, subclasses lo sobreescriben
 
-    public Arista(Interseccion f, Interseccion t)
-    {
+    public Arista(Interseccion f, Interseccion t) {
         this.from = f;
         this.to = t;
-        this.weight = 0;
-    }
-    @Override
-    public String toString()
-    {
-        return "De" + this.from + " a " + this.to + " con peso " + this.weight;
+        this.weight = 0f;
+        this.vehiculosPorMin = 0;
     }
 
-    public void calcularpeso()
-    {
-        //podemos hacer algo sencillo por el momento, como carros * weightmultiplier dependiendo si es calle o avenida. Luego lo podemos complicar más
+    // Calcula peso usando vehiculosPorMin y multiplier. Se limita a 0..1.
+    public void calcularPeso() {
+        float raw = (float) this.vehiculosPorMin / (float) MAX_VEH_PER_MIN;
+        raw *= this.weightMultiplier;
+        if (raw < 0f) raw = 0f;
+        if (raw > 1f) raw = 1f;
+        this.weight = raw;
+    }
+
+    public void setVehiculosPorMin(int vpm) {
+        if (vpm < 0) vpm = 0;
+        this.vehiculosPorMin = vpm;
+        calcularPeso();
+    }
+
+    public int getVehiculosPorMin() {
+        return this.vehiculosPorMin;
+    }
+
+    public float getWeight() {
+        return this.weight;
+    }
+
+    public Interseccion getFrom() {
+        return this.from;
+    }
+
+    public Interseccion getTo() {
+        return this.to;
+    }
+
+    public float getWeightMultiplier() {
+        return this.weightMultiplier;
+    }
+
+    public void setWeightMultiplier(float m) {
+        this.weightMultiplier = m;
+        calcularPeso();
+    }
+
+    @Override
+    public String toString() {
+        return "Arista[" + from + " -> " + to + ", veh/min=" + vehiculosPorMin + ", peso=" + String.format("%.3f", weight) + "]";
     }
 }
