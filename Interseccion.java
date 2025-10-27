@@ -2,7 +2,6 @@ import java.util.ArrayList;
 public class Interseccion
 {
     private int row, col;
-    private float weight;
     private ArrayList<Arista> vecinos;
     public Interseccion(int r, int c)
     {
@@ -13,7 +12,7 @@ public class Interseccion
 
     @Override
     public String toString() {
-        return "(" + this.row + "," + this.col + "," + this.weight + ")";
+        return "(" + this.row + "," + this.col+")";
     }
     public int[] CalcularVecinos() {
 
