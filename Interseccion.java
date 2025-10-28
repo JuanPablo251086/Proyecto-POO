@@ -6,6 +6,7 @@ public class Interseccion {
     private int row, col;
     private float weight; // atributo extra (puede representar costo de permanecer en la intersección)
     private ArrayList<Arista> vecinos;
+    private Semaforo semaforo = new Semaforo();
 
     public Interseccion(int r, int c) {
         this.row = r;
@@ -60,6 +61,10 @@ public class Interseccion {
         return col;
     }
 
+    public String getId() {
+        return row + "," + col;
+    }
+
     public void setWeight(float w) {
         this.weight = w;
     }
@@ -67,6 +72,9 @@ public class Interseccion {
     public float getWeight() {
         return this.weight;
     }
+
+    public Semaforo getSemaforo() { return this.semaforo; }
+    public void setSemaforo(Semaforo s) { this.semaforo = s; }
 
     @Override
     public boolean equals(Object o) {

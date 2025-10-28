@@ -142,6 +142,7 @@ public class Controller {
             }
         }
         if (!found) throw new GraphException("Arista no encontrada entre " + from + " y " + to);
+        actualizarSemaforo(to);
     }
 
     public TrafficController getTrafficController() {
@@ -155,5 +156,123 @@ public class Controller {
 
     public List<Interseccion> getInterseccionesStackeadas() {
         return this.interseccionesstackeadas;
+    }
+
+    // Getters de configuración global
+    public int getMaxVehPerMin() { return Arista.getMaxVehPerMin(); }
+    public float getMultCalle() { return Arista.getMultCalle(); }
+    public float getMultAvenida() { return Arista.getMultAvenida(); }
+
+    // Alias para UI
+    public List<Interseccion> getIntersecciones() { return this.interseccionesstackeadas; }
+
+    // Ajustes de configuración global y recálculo de pesos
+    public void setMaxVehPerMin(int v) {
+        Arista.setMaxVehPerMin(v);
+        recalcularPesos();
+    }
+
+    public void setMultCalle(float m) {
+        Arista.setMultCalle(m);
+        for (Arista a : allAristas) {
+            if (a instanceof Calle) {
+                a.setWeightMultiplier(Arista.getMultCalle());
+                a.onConfigChanged();
+            }
+        }
+        actualizarSemaforos();
+    }
+
+    public void setMultAvenida(float m) {
+        Arista.setMultAvenida(m);
+        for (Arista a : allAristas) {
+            if (a instanceof Avenida) {
+                a.setWeightMultiplier(Arista.getMultAvenida());
+                a.onConfigChanged();
+            }
+        }
+        actualizarSemaforos();
+    }
+
+    public void recalcularPesos() {
+        for (Arista a : allAristas) {
+            a.onConfigChanged();
+        }
+        actualizarSemaforos();
+    }
+
+    // Seteo de tráfico por IDs "r,c"
+    public void setVehiculos(String fromId, String toId, int vpm) throws GraphException {
+        Interseccion from = buscarPorId(fromId);
+        Interseccion to = buscarPorId(toId);
+        setVehiculosEnArista(from, to, vpm);
+    }
+
+    private Interseccion buscarPorId(String id) throws GraphException {
+        String[] parts = id.split(",");
+        if (parts.length != 2) throw new GraphException("Formato de id inválido: " + id);
+        int r;
+        int c;
+        try {
+            r = Integer.parseInt(parts[0].trim());
+            c = Integer.parseInt(parts[1].trim());
+        } catch (NumberFormatException ex) {
+            throw new GraphException("Formato de id inválido: " + id);
+        }
+        Interseccion inter = getInterseccion(r, c);
+        if (inter == null) throw new GraphException("Interseccion no encontrada: " + id);
+        return inter;
+    }
+
+    public java.util.List<Interseccion> calcularRuta(int filaOrigen, int colOrigen,
+                                                     int filaDestino, int colDestino) throws GraphException {
+        Interseccion origen = getInterseccion(filaOrigen, colOrigen);
+        Interseccion destino = getInterseccion(filaDestino, colDestino);
+        if (origen == null || destino == null) {
+            throw new GraphException("Origen o destino inválido");
+        }
+        return trafico.calcularRutaMinima(origen, destino);
+    }
+
+    public void actualizarSemaforos() {
+        for (Interseccion i : interseccionesstackeadas) {
+            actualizarSemaforo(i);
+        }
+    }
+
+    public void actualizarSemaforo(Interseccion destino) {
+        float sumV = 0f, sumH = 0f;
+        int cntV = 0, cntH = 0;
+
+        for (Arista a : allAristas) {
+            if (a.getTo().equals(destino)) {
+                Interseccion from = a.getFrom();
+                if (from.getCol() == destino.getCol() && from.getRow() != destino.getRow()) {
+                    sumV += a.getWeight(); cntV++;
+                } else if (from.getRow() == destino.getRow() && from.getCol() != destino.getCol()) {
+                    sumH += a.getWeight(); cntH++;
+                }
+            }
+        }
+        float cargaNS = (cntV == 0) ? 0f : (sumV / cntV);
+        float cargaEW = (cntH == 0) ? 0f : (sumH / cntH);
+
+        destino.getSemaforo().actualizarConCargas(cargaNS, cargaEW);
+    }
+
+    public void postConstruccionActualizarSemaforos() {
+        actualizarSemaforos();
+    }
+
+    public void setSemaforosPolicy(int cycleSeconds, int yellow, int allRed, int minGreen, int maxGreen) {
+        for (Interseccion i : interseccionesstackeadas) {
+            Semaforo s = i.getSemaforo();
+            s.setCycleSeconds(cycleSeconds);
+            s.setYellow(yellow);
+            s.setAllRed(allRed);
+            s.setMinGreen(minGreen);
+            s.setMaxGreen(maxGreen);
+        }
+        actualizarSemaforos();
     }
 }
