@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Control de Tráfico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #ddd;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header h2 {
+            font-size: 1.2em;
+            color: #666;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+
+        .university-info {
+            font-size: 0.9em;
+            color: #888;
+            font-style: italic;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .control-group h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .grid-container {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .traffic-grid {
+            flex: 2;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+        }
+
+        .grid {
+            display: grid;
+            gap: 8px;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .intersection {
+            background: #4CAF50;
+            border: 3px solid #388E3C;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: bold;
+            color: white;
+            font-size: clamp(0.6em, 2vw, 0.9em);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            min-height: 30px;
+            min-width: 30px;
+        }
+
+        .intersection:hover {
+            transform: scale(1.15);
+            background: #66BB6A;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .intersection.selected {
+            background: #FF5722;
+            border-color: #D84315;
+            transform: scale(1.2);
+        }
+
+        .intersection.origin {
+            background: #2196F3;
+            border-color: #1976D2;
+        }
+
+        .intersection.destination {
+            background: #FF9800;
+            border-color: #F57C00;
+        }
+
+        .intersection.route {
+            background: #9C27B0;
+            border-color: #7B1FA2;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .edge {
+            position: absolute;
+            background: #757575;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .edge::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left-color: inherit;
+        }
+
+        .edge.calle {
+            background: #1565C0;
+            border: 1px solid #0D47A1;
+        }
+
+        .edge.calle::after {
+            border-left-color: #1565C0;
+        }
+
+        .edge.avenida {
+            background: #E65100;
+            border: 1px solid #BF360C;
+        }
+
+        .edge.avenida::after {
+            border-left-color: #E65100;
+        }
+
+        .edge:hover {
+            background: #333;
+            transform: scaleY(1.5);
+            z-index: 10;
+            border-color: #333;
+        }
+
+        .edge:hover::after {
+            border-left-color: #333;
+        }
+
+        .edge.congested-low {
+            background: #2E7D32;
+        }
+
+        .edge.congested-low::after {
+            border-left-color: #2E7D32;
+        }
+
+        .edge.congested-medium {
+            background: #F57C00;
+        }
+
+        .edge.congested-medium::after {
+            border-left-color: #F57C00;
+        }
+
+        .edge.congested-high {
+            background: #C62828;
+        }
+
+        .edge.congested-high::after {
+            border-left-color: #C62828;
+        }
+
+        .info-panel {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #495057);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .route-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .traffic-slider {
+            margin: 10px 0;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sistema de Control de Tráfico Urbano</h1>
+            <h2>Implementación del Algoritmo de Dijkstra para Optimización de Rutas</h2>
+            <div class="university-info">
+                Proyecto de Estructuras de Datos y Algoritmos<br>
+                Simulación de Red de Transporte con Análisis de Congestión
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>🎯 Planificación de Ruta</h3>
+                <button class="btn" onclick="setRouteMode('origin')">Seleccionar Origen</button>
+                <button class="btn" onclick="setRouteMode('destination')">Seleccionar Destino</button>
+                <button class="btn" onclick="calculateRoute()">Calcular Ruta Óptima</button>
+                <button class="btn btn-secondary" onclick="clearRoute()">Limpiar Ruta</button>
+            </div>
+
+            <div class="control-group">
+                <h3>🚗 Control de Tráfico</h3>
+                <div class="slider-container">
+                    <label>Tráfico Global:</label>
+                    <input type="range" id="globalTraffic" class="slider" min="0" max="100" value="30" onchange="updateGlobalTraffic(this.value)">
+                    <span id="globalTrafficValue">30</span>
+                </div>
+                <button class="btn" onclick="randomizeTraffic()">Tráfico Aleatorio</button>
+                <button class="btn btn-secondary" onclick="clearAllTraffic()">Limpiar Tráfico</button>
+                <button class="btn" onclick="showTrafficModal()">Editar Arista</button>
+            </div>
+
+            <div class="control-group">
+                <h3>⚙️ Configuración</h3>
+                <div class="input-container">
+                    <label for="gridSize">Dimensiones de la grilla:</label>
+                    <input type="number" id="gridSize" min="3" max="100" value="6" onchange="updateGridSize(this.value)">
+                    <span id="gridSizeValue">6x6</span>
+                </div>
+                <button class="btn" onclick="initializeGrid()">Reinicializar Grid</button>
+                <button class="btn btn-secondary" onclick="showLegend()">Ver Leyenda</button>
+                <button class="btn btn-secondary" onclick="exportData()">Exportar Datos</button>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <div class="traffic-grid">
+                <h3 id="gridTitle">Red de Intersecciones (6x6)</h3>
+                <div class="grid" id="trafficGrid"></div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2E7D32;"></div>
+                        <span>Nodo de Red</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #1565C0;"></div>
+                        <span>Nodo Origen</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #E65100;"></div>
+                        <span>Nodo Destino</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #6A1B9A;"></div>
+                        <span>Ruta Óptima (Dijkstra)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #1565C0; border-radius: 2px; height: 6px;"></div>
+                        <span>Arista: Calle (Horizontal)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #E65100; border-radius: 2px; height: 6px;"></div>
+                        <span>Arista: Avenida (Vertical)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>Análisis del Sistema</h3>
+                <div id="infoContent">
+                    <p><strong>Descripción:</strong> Sistema de simulación de red de tráfico implementando el algoritmo de Dijkstra para la búsqueda de caminos mínimos.</p>
+                    <br>
+                    <p><strong>Metodología:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Definir nodo origen mediante selección directa</li>
+                        <li>Definir nodo destino en la red</li>
+                        <li>Ejecutar algoritmo de Dijkstra para encontrar la ruta de menor peso</li>
+                        <li>Ajustar parámetros de congestión (0-100 veh/min)</li>
+                        <li>Analizar resultados y métricas de rendimiento</li>
+                    </ul>
+                    <br>
+                    <p><strong>Nota:</strong> Las aristas muestran direccionalidad mediante flechas. Los pesos se calculan usando la fórmula: peso = (vehículos/min / 100) × multiplicador_tipo</p>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalIntersections">36</div>
+                        <div class="stat-label">Nodos Totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalEdges">60</div>
+                        <div class="stat-label">Aristas Totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avgTraffic">0</div>
+                        <div class="stat-label">Congestión Media</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar aristas -->
+    <div id="trafficModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeTrafficModal()">&times;</span>
+            <h3>Editar Tráfico de Arista</h3>
+            <div id="modalContent">
+                <p>Selecciona una arista en el mapa para editarla</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulación del sistema Java en JavaScript
+        class Intersection {
+            constructor(row, col) {
+                this.row = row;
+                this.col = col;
+                this.weight = 0;
+                this.neighbors = [];
+            }
+
+            calculateNeighbors() {
+                // Lógica original del código Java pero con gridSize dinámico
+                let vrow = (this.col % 2 === 1) ? this.row - 1 : this.row + 1;
+                let vcol = this.col;
+                if (vrow < 1 || vrow > gridSize || vcol < 1 || vcol > gridSize) {
+                    vrow = 0;
+                    vcol = 0;
+                }
+
+                let hrow = this.row;
+                let hcol = (this.row % 2 === 1) ? this.col + 1 : this.col - 1;
+                if (hrow < 1 || hrow > gridSize || hcol < 1 || hcol > gridSize) {
+                    hrow = 0;
+                    hcol = 0;
+                }
+
+                return [vrow, vcol, hrow, hcol];
+            }
+
+            toString() {
+                return `(${this.row},${this.col})`;
+            }
+        }
+
+        class Edge {
+            constructor(from, to, type) {
+                this.from = from;
+                this.to = to;
+                this.type = type; // 'calle' o 'avenida'
+                this.vehiclesPorMin = 0;
+                this.weight = 0;
+                this.weightMultiplier = type === 'calle' ? 1.0 : 0.8; // avenidas más eficientes
+            }
+
+            calculateWeight() {
+                let raw = this.vehiclesPorMin / 100.0; // MAX_VEH_PER_MIN = 100
+                raw *= this.weightMultiplier;
+                this.weight = Math.max(0, Math.min(1, raw));
+            }
+
+            setVehiclesPorMin(vpm) {
+                this.vehiclesPorMin = Math.max(0, vpm);
+                this.calculateWeight();
+            }
+        }
+
+        // Variables globales
+        let intersections = [];
+        let edges = [];
+        let grid = [];
+        let selectedOrigin = null;
+        let selectedDestination = null;
+        let currentRoute = [];
+        let routeMode = null; // 'origin', 'destination', null
+        let selectedEdge = null;
+        let gridSize = 6; // Tamaño dinámico de la grilla
+
+        // Inicializar el sistema
+        function initializeSystem() {
+            intersections = [];
+            edges = [];
+            grid = [];
+            
+            // Crear intersecciones (gridSize x gridSize)
+            for (let r = 1; r <= gridSize; r++) {
+                grid[r] = [];
+                for (let c = 1; c <= gridSize; c++) {
+                    const intersection = new Intersection(r, c);
+                    grid[r][c] = intersection;
+                    intersections.push(intersection);
+                }
+            }
+
+            // Crear aristas basado en la lógica original
+            for (let r = 1; r <= gridSize; r++) {
+                for (let c = 1; c <= gridSize; c++) {
+                    const intersection = grid[r][c];
+                    const neighbors = intersection.calculateNeighbors();
+                    
+                    // Vecino vertical (Avenida)
+                    if (neighbors[0] !== 0 && neighbors[1] !== 0) {
+                        const neighbor = grid[neighbors[0]][neighbors[1]];
+                        if (!edgeExists(intersection, neighbor)) {
+                            const edge = new Edge(intersection, neighbor, 'avenida');
+                            edges.push(edge);
+                            intersection.neighbors.push(edge);
+                        }
+                    }
+                    
+                    // Vecino horizontal (Calle)
+                    if (neighbors[2] !== 0 && neighbors[3] !== 0) {
+                        const neighbor = grid[neighbors[2]][neighbors[3]];
+                        if (!edgeExists(intersection, neighbor)) {
+                            const edge = new Edge(intersection, neighbor, 'calle');
+                            edges.push(edge);
+                            intersection.neighbors.push(edge);
+                        }
+                    }
+                }
+            }
+
+            updateStats();
+        }
+
+        function edgeExists(a, b) {
+            return edges.some(edge => 
+                (edge.from === a && edge.to === b) || 
+                (edge.from === b && edge.to === a)
+            );
+        }
+
+        // Algoritmo de Dijkstra
+        function dijkstra(origin, destination) {
+            const dist = new Map();
+            const prev = new Map();
+            const visited = new Set();
+            
+            intersections.forEach(node => {
+                dist.set(node, Infinity);
+                prev.set(node, null);
+            });
+            dist.set(origin, 0);
+
+            const pq = [origin];
+            
+            while (pq.length > 0) {
+                // Encontrar nodo con distancia mínima
+                let current = pq.reduce((min, node) => 
+                    dist.get(node) < dist.get(min) ? node : min
+                );
+                
+                pq.splice(pq.indexOf(current), 1);
+                
+                if (visited.has(current)) continue;
+                visited.add(current);
+                
+                if (current === destination) break;
+                
+                current.neighbors.forEach(edge => {
+                    const neighbor = edge.to;
+                    if (visited.has(neighbor)) return;
+                    
+                    const alt = dist.get(current) + edge.weight;
+                    if (alt < dist.get(neighbor)) {
+                        dist.set(neighbor, alt);
+                        prev.set(neighbor, current);
+                        if (!pq.includes(neighbor)) {
+                            pq.push(neighbor);
+                        }
+                    }
+                });
+            }
+
+            // Reconstruir ruta
+            if (dist.get(destination) === Infinity) {
+                throw new Error(`No existe ruta entre ${origin} y ${destination}`);
+            }
+
+            const route = [];
+            let u = destination;
+            while (u !== null) {
+                route.unshift(u);
+                u = prev.get(u);
+            }
+            return route;
+        }
+
+        // Renderizar la grilla
+        function renderGrid() {
+            const gridElement = document.getElementById('trafficGrid');
+            gridElement.innerHTML = '';
+            
+            // Configurar CSS Grid dinámicamente
+            gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            gridElement.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+
+            // Crear intersecciones
+            for (let r = 1; r <= gridSize; r++) {
+                for (let c = 1; c <= gridSize; c++) {
+                    const intersection = grid[r][c];
+                    const element = document.createElement('div');
+                    element.className = 'intersection';
+                    element.textContent = `${r},${c}`;
+                    element.style.gridColumn = c;
+                    element.style.gridRow = r;
+                    element.onclick = () => selectIntersection(intersection);
+                    
+                    // Aplicar clases de estado
+                    if (intersection === selectedOrigin) {
+                        element.classList.add('origin');
+                    } else if (intersection === selectedDestination) {
+                        element.classList.add('destination');
+                    } else if (currentRoute.includes(intersection)) {
+                        element.classList.add('route');
+                    }
+                    
+                    gridElement.appendChild(element);
+                }
+            }
+
+            // Crear aristas
+            edges.forEach((edge, index) => {
+                const fromPos = getGridPosition(edge.from);
+                const toPos = getGridPosition(edge.to);
+                
+                const edgeElement = document.createElement('div');
+                edgeElement.className = `edge ${edge.type}`;
+                edgeElement.onclick = () => selectEdge(edge);
+                
+                // Calcular posición y rotación
+                const deltaX = toPos.x - fromPos.x;
+                const deltaY = toPos.y - fromPos.y;
+                const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+                
+                const centerX = (fromPos.x + toPos.x) / 2;
+                const centerY = (fromPos.y + toPos.y) / 2;
+                
+                edgeElement.style.width = `${length}px`;
+                edgeElement.style.height = '4px';
+                edgeElement.style.left = `${centerX - length/2}px`;
+                edgeElement.style.top = `${centerY - 2}px`;
+                edgeElement.style.transform = `rotate(${angle}deg)`;
+                
+                // Color basado en congestión
+                const congestionLevel = edge.weight;
+                if (congestionLevel < 0.3) {
+                    edgeElement.classList.add('congested-low');
+                } else if (congestionLevel < 0.7) {
+                    edgeElement.classList.add('congested-medium');
+                } else {
+                    edgeElement.classList.add('congested-high');
+                }
+                
+                gridElement.appendChild(edgeElement);
+            });
+        }
+
+        function getGridPosition(intersection) {
+            const gridElement = document.getElementById('trafficGrid');
+            const gridRect = gridElement.getBoundingClientRect();
+            const cellWidth = gridRect.width / gridSize;
+            const cellHeight = gridRect.height / gridSize;
+            
+            return {
+                x: (intersection.col - 0.5) * cellWidth,
+                y: (intersection.row - 0.5) * cellHeight
+            };
+        }
+
+        // Funciones de interfaz
+        function selectIntersection(intersection) {
+            if (routeMode === 'origin') {
+                selectedOrigin = intersection;
+                routeMode = null;
+                updateInfoPanel(`Nodo origen configurado: ${intersection}`);
+            } else if (routeMode === 'destination') {
+                selectedDestination = intersection;
+                routeMode = null;
+                updateInfoPanel(`Nodo destino configurado: ${intersection}`);
+            } else {
+                updateInfoPanel(`
+                    <h4>Análisis del Nodo ${intersection}</h4>
+                    <p><strong>Coordenadas:</strong> Fila ${intersection.row}, Columna ${intersection.col}</p>
+                    <p><strong>Grado del nodo:</strong> ${intersection.neighbors.length} aristas salientes</p>
+                    <p><strong>Conectividad:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        ${intersection.neighbors.map(edge => 
+                            `<li>Arista ${edge.type} → ${edge.to} | Flujo: ${edge.vehiclesPorMin} veh/min | Peso: ${edge.weight.toFixed(4)}</li>`
+                        ).join('')}
+                    </ul>
+                    <p><strong>Nota:</strong> Este nodo sigue el patrón de conectividad hexagonal del sistema original.</p>
+                `);
+            }
+            renderGrid();
+        }
+
+        function selectEdge(edge) {
+            selectedEdge = edge;
+            updateInfoPanel(`
+                <h4>Análisis de Arista: ${edge.from} → ${edge.to}</h4>
+                <p><strong>Tipo de vía:</strong> ${edge.type.charAt(0).toUpperCase() + edge.type.slice(1)}</p>
+                <p><strong>Flujo vehicular:</strong> ${edge.vehiclesPorMin} vehículos/minuto</p>
+                <p><strong>Peso normalizado:</strong> ${edge.weight.toFixed(4)} (0.0 = libre, 1.0 = saturado)</p>
+                <p><strong>Multiplicador de tipo:</strong> ${edge.weightMultiplier}</p>
+                <p><strong>Capacidad teórica máxima:</strong> 100 vehículos/minuto</p>
+                <div style="margin-top: 15px; border: 1px solid #ddd; padding: 15px;">
+                    <label><strong>Ajuste de parámetros:</strong></label>
+                    <input type="range" min="0" max="100" value="${edge.vehiclesPorMin}" 
+                           onchange="updateEdgeTraffic(${edges.indexOf(edge)}, this.value)"
+                           style="width: 100%; margin: 10px 0;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>0 veh/min</span>
+                        <span><strong>${edge.vehiclesPorMin} veh/min</strong></span>
+                        <span>100 veh/min</span>
+                    </div>
+                </div>
+            `);
+        }
+
+        function setRouteMode(mode) {
+            routeMode = mode;
+            updateInfoPanel(mode === 'origin' ? 
+                'Seleccione el nodo origen haciendo clic en una intersección de la red' :
+                'Seleccione el nodo destino haciendo clic en una intersección de la red'
+            );
+        }
+
+        function calculateRoute() {
+            if (!selectedOrigin || !selectedDestination) {
+                alert('Error: Debe definir tanto el nodo origen como el nodo destino antes de ejecutar el algoritmo');
+                return;
+            }
+
+            try {
+                currentRoute = dijkstra(selectedOrigin, selectedDestination);
+                const totalWeight = calculateRouteWeight(currentRoute);
+                
+                updateInfoPanel(`
+                    <h4>Resultado del Algoritmo de Dijkstra</h4>
+                    <p><strong>Nodo Origen:</strong> ${selectedOrigin}</p>
+                    <p><strong>Nodo Destino:</strong> ${selectedDestination}</p>
+                    <p><strong>Número de nodos en la ruta:</strong> ${currentRoute.length}</p>
+                    <p><strong>Número de aristas:</strong> ${currentRoute.length - 1}</p>
+                    <p><strong>Peso total acumulado:</strong> ${totalWeight.toFixed(4)}</p>
+                    <div class="route-info">
+                        <h5>Secuencia de nodos:</h5>
+                        <ol style="margin-left: 20px;">
+                            ${currentRoute.map((intersection, index) => 
+                                `<li>Nodo ${intersection}${index === 0 ? ' (origen)' : index === currentRoute.length - 1 ? ' (destino)' : ''}</li>`
+                            ).join('')}
+                        </ol>
+                    </div>
+                    <p><strong>Complejidad:</strong> O((V + E) log V) donde V=${intersections.length} nodos y E=${edges.length} aristas</p>
+                `);
+                renderGrid();
+            } catch (error) {
+                alert(`Error en el cálculo: ${error.message}`);
+            }
+        }
+
+        function calculateRouteWeight(route) {
+            let totalWeight = 0;
+            for (let i = 0; i < route.length - 1; i++) {
+                const current = route[i];
+                const next = route[i + 1];
+                const edge = current.neighbors.find(e => e.to === next);
+                if (edge) {
+                    totalWeight += edge.weight;
+                }
+            }
+            return totalWeight;
+        }
+
+        function clearRoute() {
+            selectedOrigin = null;
+            selectedDestination = null;
+            currentRoute = [];
+            routeMode = null;
+            updateInfoPanel('Ruta limpiada. Selecciona nuevo origen y destino.');
+            renderGrid();
+        }
+
+        function randomizeTraffic() {
+            edges.forEach(edge => {
+                edge.setVehiclesPorMin(Math.floor(Math.random() * 81));
+            });
+            updateStats();
+            renderGrid();
+            updateInfoPanel('Tráfico aleatorio generado en todas las aristas.');
+        }
+
+        function clearAllTraffic() {
+            edges.forEach(edge => {
+                edge.setVehiclesPorMin(0);
+            });
+            updateStats();
+            renderGrid();
+            updateInfoPanel('Tráfico limpiado en todas las aristas.');
+        }
+
+        function updateGlobalTraffic(value) {
+            document.getElementById('globalTrafficValue').textContent = `${value} vehículos/minuto`;
+            edges.forEach(edge => {
+                edge.setVehiclesPorMin(parseInt(value));
+            });
+            updateStats();
+            renderGrid();
+        }
+
+        function updateEdgeTraffic(edgeIndex, value) {
+            edges[edgeIndex].setVehiclesPorMin(parseInt(value));
+            updateStats();
+            renderGrid();
+            selectEdge(edges[edgeIndex]); // Actualizar panel de info
+        }
+
+        function updateStats() {
+            const avgTraffic = edges.reduce((sum, edge) => sum + edge.vehiclesPorMin, 0) / edges.length;
+            document.getElementById('avgTraffic').textContent = Math.round(avgTraffic);
+            document.getElementById('totalEdges').textContent = edges.length;
+            document.getElementById('totalIntersections').textContent = intersections.length;
+        }
+
+        function updateGridSize(value) {
+            gridSize = parseInt(value);
+            document.getElementById('gridSizeValue').textContent = `${gridSize}x${gridSize}`;
+            document.getElementById('gridTitle').textContent = `Red de Intersecciones (${gridSize}x${gridSize})`;
+            
+            // Reinicializar automáticamente con el nuevo tamaño
+            initializeGrid();
+        }
+
+        function updateInfoPanel(content) {
+            document.getElementById('infoContent').innerHTML = content;
+        }
+
+        function initializeGrid() {
+            selectedOrigin = null;
+            selectedDestination = null;
+            currentRoute = [];
+            routeMode = null;
+            initializeSystem();
+            renderGrid();
+            updateInfoPanel('Sistema reinicializado.');
+        }
+
+        function showTrafficModal() {
+            document.getElementById('trafficModal').style.display = 'block';
+        }
+
+        function closeTrafficModal() {
+            document.getElementById('trafficModal').style.display = 'none';
+        }
+
+        function exportData() {
+            const data = {
+                intersections: intersections.map(i => ({row: i.row, col: i.col})),
+                edges: edges.map(e => ({
+                    from: {row: e.from.row, col: e.from.col},
+                    to: {row: e.to.row, col: e.to.col},
+                    type: e.type,
+                    vehiclesPorMin: e.vehiclesPorMin,
+                    weight: e.weight
+                })),
+                route: currentRoute.map(i => ({row: i.row, col: i.col}))
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'traffic_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Inicializar al cargar la página
+        window.onload = function() {
+            initializeSystem();
+            renderGrid();
+        };
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('trafficModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
