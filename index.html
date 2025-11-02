@@ -85,38 +85,108 @@
 
         .traffic-grid {
             flex: 2;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            border: 2px solid #dee2e6;
+            background: #fafafa;
+            padding: 25px;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grid-size-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-left: 4px solid #1565C0;
+            font-size: 0.9em;
+            border-radius: 4px;
+        }
+
+        .grid-container-wrapper {
+            flex: 1;
+            overflow: auto;
+            border: 2px solid #ccc;
+            background: white;
+            position: relative;
+            min-height: 400px;
+            max-height: 600px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .grid-container-wrapper::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        .grid-container-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+
+        .grid-container-wrapper::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 6px;
+        }
+
+        .grid-container-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .grid-container-wrapper::-webkit-scrollbar-corner {
+            background: #f1f1f1;
         }
 
         .grid {
             display: grid;
             gap: 8px;
-            width: 100%;
-            max-width: 600px;
-            aspect-ratio: 1;
-            margin: 0 auto;
+            margin: 20px;
             position: relative;
+            min-width: max-content;
+            min-height: max-content;
         }
 
         .intersection {
-            background: #4CAF50;
-            border: 3px solid #388E3C;
+            background: #2E7D32;
+            border: 2px solid #1B5E20;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             position: relative;
             font-weight: bold;
             color: white;
-            font-size: clamp(0.6em, 2vw, 0.9em);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            min-height: 30px;
-            min-width: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            min-width: 20px;
+            min-height: 20px;
+            max-width: 80px;
+            max-height: 80px;
+            z-index: 5;
+        }
+
+        .intersection:hover {
+            transform: scale(1.1);
+            background: #388E3C;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            z-index: 15;
+        }
+
+        .intersection.origin {
+            background: #1565C0;
+            border-color: #0D47A1;
+        }
+
+        .intersection.destination {
+            background: #E65100;
+            border-color: #BF360C;
+        }
+
+        .intersection.route {
+            background: #6A1B9A;
+            border-color: #4A148C;
+            animation: pulse 2s infinite;
         }
 
         .intersection:hover {
@@ -156,10 +226,12 @@
         .edge {
             position: absolute;
             background: #757575;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             border-radius: 2px;
             cursor: pointer;
-            z-index: 1;
+            z-index: 2;
+            --arrow-size: 8px;
+            pointer-events: auto;
         }
 
         .edge::after {
@@ -170,10 +242,11 @@
             transform: translateY(-50%);
             width: 0;
             height: 0;
-            border-left: 8px solid;
-            border-top: 4px solid transparent;
-            border-bottom: 4px solid transparent;
+            border-left: var(--arrow-size) solid;
+            border-top: calc(var(--arrow-size) / 2) solid transparent;
+            border-bottom: calc(var(--arrow-size) / 2) solid transparent;
             border-left-color: inherit;
+            z-index: 3;
         }
 
         .edge.calle {
@@ -207,6 +280,7 @@
 
         .edge.congested-low {
             background: #2E7D32;
+            border-color: #1B5E20;
         }
 
         .edge.congested-low::after {
@@ -215,6 +289,7 @@
 
         .edge.congested-medium {
             background: #F57C00;
+            border-color: #E65100;
         }
 
         .edge.congested-medium::after {
@@ -223,6 +298,7 @@
 
         .edge.congested-high {
             background: #C62828;
+            border-color: #8B0000;
         }
 
         .edge.congested-high::after {
@@ -419,11 +495,22 @@
 
         <div class="controls">
             <div class="control-group">
-                <h3>🎯 Planificación de Ruta</h3>
-                <button class="btn" onclick="setRouteMode('origin')">Seleccionar Origen</button>
-                <button class="btn" onclick="setRouteMode('destination')">Seleccionar Destino</button>
-                <button class="btn" onclick="calculateRoute()">Calcular Ruta Óptima</button>
-                <button class="btn btn-secondary" onclick="clearRoute()">Limpiar Ruta</button>
+                <h3>Configuración de Ruta</h3>
+                <button class="btn" onclick="setRouteMode('origin')">Definir Nodo Origen</button>
+                <button class="btn" onclick="setRouteMode('destination')">Definir Nodo Destino</button>
+                
+                <div class="input-container">
+                    <label>Origen por coordenadas (fila,columna):</label>
+                    <input type="text" id="originCoords" placeholder="ej: 1,1" onchange="setOriginByCoords(this.value)">
+                </div>
+                
+                <div class="input-container">
+                    <label>Destino por coordenadas (fila,columna):</label>
+                    <input type="text" id="destinationCoords" placeholder="ej: 6,6" onchange="setDestinationByCoords(this.value)">
+                </div>
+                
+                <button class="btn" onclick="calculateRoute()">Ejecutar Algoritmo de Dijkstra</button>
+                <button class="btn btn-secondary" onclick="clearRoute()">Limpiar Configuración</button>
             </div>
 
             <div class="control-group">
@@ -454,7 +541,12 @@
         <div class="grid-container">
             <div class="traffic-grid">
                 <h3 id="gridTitle">Red de Intersecciones (6x6)</h3>
-                <div class="grid" id="trafficGrid"></div>
+                <div class="grid-size-info" id="gridSizeInfo">
+                    Tamaño de red: 6x6 | Para redes grandes, use las barras de desplazamiento
+                </div>
+                <div class="grid-container-wrapper">
+                    <div class="grid" id="trafficGrid"></div>
+                </div>
                 
                 <div class="legend">
                     <div class="legend-item">
@@ -474,12 +566,16 @@
                         <span>Ruta Óptima (Dijkstra)</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: #1565C0; border-radius: 2px; height: 6px;"></div>
-                        <span>Arista: Calle (Horizontal)</span>
+                        <div class="legend-color" style="background: #1565C0; border-radius: 2px; height: 6px; position: relative;">
+                            <div style="position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 6px solid #1565C0; border-top: 3px solid transparent; border-bottom: 3px solid transparent;"></div>
+                        </div>
+                        <span>Calle (Horizontal) →</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background: #E65100; border-radius: 2px; height: 6px;"></div>
-                        <span>Arista: Avenida (Vertical)</span>
+                        <div class="legend-color" style="background: #E65100; border-radius: 2px; height: 6px; position: relative;">
+                            <div style="position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 6px solid #E65100; border-top: 3px solid transparent; border-bottom: 3px solid transparent;"></div>
+                        </div>
+                        <span>Avenida (Vertical) ↑</span>
                     </div>
                 </div>
             </div>
@@ -710,11 +806,22 @@
         // Renderizar la grilla
         function renderGrid() {
             const gridElement = document.getElementById('trafficGrid');
+            const containerWrapper = document.querySelector('.grid-container-wrapper');
             gridElement.innerHTML = '';
             
+            // Obtener dimensiones disponibles del contenedor
+            const containerWidth = containerWrapper.clientWidth - 40; // 20px margin cada lado
+            const containerHeight = containerWrapper.clientHeight - 40;
+            
+            // Calcular el tamaño óptimo que se ajuste al contenedor
+            const availableSize = Math.min(containerWidth, containerHeight);
+            const cellSize = Math.max(15, Math.floor(availableSize / gridSize) - 2); // Mínimo 15px
+            const gap = Math.max(1, Math.floor(cellSize / 8)); // Gap proporcional
+            
             // Configurar CSS Grid dinámicamente
-            gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            gridElement.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+            gridElement.style.gridTemplateColumns = `repeat(${gridSize}, ${cellSize}px)`;
+            gridElement.style.gridTemplateRows = `repeat(${gridSize}, ${cellSize}px)`;
+            gridElement.style.gap = `${gap}px`;
 
             // Crear intersecciones
             for (let r = 1; r <= gridSize; r++) {
@@ -722,9 +829,13 @@
                     const intersection = grid[r][c];
                     const element = document.createElement('div');
                     element.className = 'intersection';
-                    element.textContent = `${r},${c}`;
+                    // Mostrar coordenadas solo si el nodo es suficientemente grande
+                    element.textContent = cellSize > 25 ? `${r},${c}` : `${r}${c}`;
                     element.style.gridColumn = c;
                     element.style.gridRow = r;
+                    element.style.width = `${cellSize}px`;
+                    element.style.height = `${cellSize}px`;
+                    element.style.fontSize = `${Math.max(6, Math.min(12, cellSize / 3))}px`;
                     element.onclick = () => selectIntersection(intersection);
                     
                     // Aplicar clases de estado
@@ -740,10 +851,10 @@
                 }
             }
 
-            // Crear aristas
+            // Crear aristas con líneas que conectan completamente
             edges.forEach((edge, index) => {
-                const fromPos = getGridPosition(edge.from);
-                const toPos = getGridPosition(edge.to);
+                const fromPos = getGridPosition(edge.from, cellSize, gap);
+                const toPos = getGridPosition(edge.to, cellSize, gap);
                 
                 const edgeElement = document.createElement('div');
                 edgeElement.className = `edge ${edge.type}`;
@@ -755,14 +866,18 @@
                 const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                 const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
                 
-                const centerX = (fromPos.x + toPos.x) / 2;
-                const centerY = (fromPos.y + toPos.y) / 2;
-                
+                // La línea va desde el centro de un nodo hasta el centro del otro
+                const edgeThickness = Math.max(1, Math.floor(cellSize / 10));
                 edgeElement.style.width = `${length}px`;
-                edgeElement.style.height = '4px';
-                edgeElement.style.left = `${centerX - length/2}px`;
-                edgeElement.style.top = `${centerY - 2}px`;
+                edgeElement.style.height = `${edgeThickness}px`;
+                edgeElement.style.left = `${fromPos.x}px`;
+                edgeElement.style.top = `${fromPos.y - edgeThickness/2}px`;
                 edgeElement.style.transform = `rotate(${angle}deg)`;
+                edgeElement.style.transformOrigin = '0 50%';
+                
+                // Ajustar tamaño de flecha según el tamaño de celda
+                const arrowSize = Math.max(3, Math.min(12, cellSize / 3));
+                edgeElement.style.setProperty('--arrow-size', `${arrowSize}px`);
                 
                 // Color basado en congestión
                 const congestionLevel = edge.weight;
@@ -776,17 +891,28 @@
                 
                 gridElement.appendChild(edgeElement);
             });
+
+            // Actualizar información del tamaño
+            updateGridSizeDisplay();
         }
 
-        function getGridPosition(intersection) {
-            const gridElement = document.getElementById('trafficGrid');
-            const gridRect = gridElement.getBoundingClientRect();
-            const cellWidth = gridRect.width / gridSize;
-            const cellHeight = gridRect.height / gridSize;
+        function updateGridSizeDisplay() {
+            const totalNodes = gridSize * gridSize;
+            const containerWrapper = document.querySelector('.grid-container-wrapper');
+            const availableSize = Math.min(containerWrapper.clientWidth, containerWrapper.clientHeight) - 40;
+            const cellSize = Math.max(15, Math.floor(availableSize / gridSize) - 2);
             
+            document.getElementById('gridSizeInfo').innerHTML = `
+                Tamaño de red: ${gridSize}x${gridSize} (${totalNodes} nodos) | Tamaño de celda: ${cellSize}px
+                ${cellSize < 25 ? '| <strong>Red compacta:</strong> Coordenadas abreviadas' : '| Visualización completa'}
+            `;
+        }
+
+        function getGridPosition(intersection, cellSize, gap) {
+            const margin = 20; // margen del contenedor
             return {
-                x: (intersection.col - 0.5) * cellWidth,
-                y: (intersection.row - 0.5) * cellHeight
+                x: margin + (intersection.col - 1) * (cellSize + gap) + cellSize / 2,
+                y: margin + (intersection.row - 1) * (cellSize + gap) + cellSize / 2
             };
         }
 
@@ -840,12 +966,61 @@
             `);
         }
 
-        function setRouteMode(mode) {
-            routeMode = mode;
-            updateInfoPanel(mode === 'origin' ? 
-                'Seleccione el nodo origen haciendo clic en una intersección de la red' :
-                'Seleccione el nodo destino haciendo clic en una intersección de la red'
-            );
+        function setOriginByCoords(coordsStr) {
+            const coords = parseCoordinates(coordsStr);
+            if (coords) {
+                const intersection = grid[coords.row] && grid[coords.row][coords.col];
+                if (intersection) {
+                    selectedOrigin = intersection;
+                    updateInfoPanel(`Nodo origen configurado por coordenadas: ${intersection}`);
+                    renderGrid();
+                } else {
+                    alert(`Coordenadas inválidas: (${coords.row},${coords.col}). Rango válido: 1 a ${gridSize}`);
+                    document.getElementById('originCoords').value = '';
+                }
+            }
+        }
+
+        function setDestinationByCoords(coordsStr) {
+            const coords = parseCoordinates(coordsStr);
+            if (coords) {
+                const intersection = grid[coords.row] && grid[coords.row][coords.col];
+                if (intersection) {
+                    selectedDestination = intersection;
+                    updateInfoPanel(`Nodo destino configurado por coordenadas: ${intersection}`);
+                    renderGrid();
+                } else {
+                    alert(`Coordenadas inválidas: (${coords.row},${coords.col}). Rango válido: 1 a ${gridSize}`);
+                    document.getElementById('destinationCoords').value = '';
+                }
+            }
+        }
+
+        function parseCoordinates(coordsStr) {
+            if (!coordsStr || !coordsStr.trim()) return null;
+            
+            // Limpiar el string y dividir por coma
+            const parts = coordsStr.trim().replace(/[()]/g, '').split(',');
+            
+            if (parts.length !== 2) {
+                alert('Formato incorrecto. Use: fila,columna (ej: 1,1)');
+                return null;
+            }
+            
+            const row = parseInt(parts[0].trim());
+            const col = parseInt(parts[1].trim());
+            
+            if (isNaN(row) || isNaN(col)) {
+                alert('Las coordenadas deben ser números enteros');
+                return null;
+            }
+            
+            if (row < 1 || row > gridSize || col < 1 || col > gridSize) {
+                alert(`Coordenadas fuera de rango. Use valores entre 1 y ${gridSize}`);
+                return null;
+            }
+            
+            return { row, col };
         }
 
         function calculateRoute() {
@@ -899,7 +1074,12 @@
             selectedDestination = null;
             currentRoute = [];
             routeMode = null;
-            updateInfoPanel('Ruta limpiada. Selecciona nuevo origen y destino.');
+            
+            // Limpiar los campos de coordenadas
+            document.getElementById('originCoords').value = '';
+            document.getElementById('destinationCoords').value = '';
+            
+            updateInfoPanel('Configuración de ruta limpiada. Seleccione nuevo origen y destino.');
             renderGrid();
         }
 
@@ -949,6 +1129,20 @@
             document.getElementById('gridSizeValue').textContent = `${gridSize}x${gridSize}`;
             document.getElementById('gridTitle').textContent = `Red de Intersecciones (${gridSize}x${gridSize})`;
             
+            // Limpiar selecciones anteriores al cambiar el tamaño
+            selectedOrigin = null;
+            selectedDestination = null;
+            currentRoute = [];
+            routeMode = null;
+            
+            // Limpiar campos de coordenadas
+            if (document.getElementById('originCoords')) {
+                document.getElementById('originCoords').value = '';
+            }
+            if (document.getElementById('destinationCoords')) {
+                document.getElementById('destinationCoords').value = '';
+            }
+            
             // Reinicializar automáticamente con el nuevo tamaño
             initializeGrid();
         }
@@ -965,6 +1159,11 @@
             initializeSystem();
             renderGrid();
             updateInfoPanel('Sistema reinicializado.');
+        }
+
+        function forceRedraw() {
+            renderGrid();
+            updateInfoPanel('Aristas redibujadas. Si persisten problemas de alineación, reinicialice la red.');
         }
 
         function showTrafficModal() {
@@ -1002,6 +1201,11 @@
             initializeSystem();
             renderGrid();
         };
+
+        // Redimensionar cuando cambia el tamaño de la ventana
+        window.addEventListener('resize', function() {
+            setTimeout(renderGrid, 100); // Pequeño delay para que el navegador termine de redimensionar
+        });
 
         // Cerrar modal al hacer clic fuera
         window.onclick = function(event) {
