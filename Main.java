@@ -12,8 +12,7 @@ public class Main {
 
         // Inicializa aristas y pesos aleatorios para empezar a probar
         controlador.inicializarAristasYPesosAleatorios();
-        //esto lo vamos a modificar en la siguiente entrega para que sea mas accesible y facil de modificar.
-
+        //se deja como default de inicializacion, aunque ya estan otras opciones
     // Inicializar planes de semáforos según cargas actuales
     controlador.postConstruccionActualizarSemaforos();
 

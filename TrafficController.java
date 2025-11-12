@@ -27,12 +27,14 @@ public class TrafficController {
         for (Interseccion nodo : controller.getInterseccionesStackeadas()) {
             gScore.put(nodo, Float.POSITIVE_INFINITY);
             fScore.put(nodo, Float.POSITIVE_INFINITY);
+            //Cambio a uso de infinito es más fiel al algoritmo original
             cameFrom.put(nodo, null);
         }
         gScore.put(origen, 0f);
         fScore.put(origen, heuristica(origen, destino));
 
         PriorityQueue<Interseccion> abiertos = new PriorityQueue<>(Comparator.comparingDouble(fScore::get));
+        //se ordenan más naturalmente a través de su método comparator
         abiertos.add(origen);
 
         while (!abiertos.isEmpty()) {
@@ -63,6 +65,7 @@ public class TrafficController {
         }
 
         throw new GraphException("No existe ruta entre " + origen + " y " + destino);
+        //esto no debería suceder según la regla de instancia par de intersecciones, pero es posible 
     }
 
     private List<Interseccion> reconstruirRuta(Map<Interseccion, Interseccion> prev, Interseccion destino) {
@@ -75,12 +78,14 @@ public class TrafficController {
         return ruta;
     }
 
+    //más técnico que solo sumar arbitrariamente
     private float heuristica(Interseccion a, Interseccion b) {
         int dx = a.getRow() - b.getRow();
         int dy = a.getCol() - b.getCol();
         return (float) Math.sqrt(dx * dx + dy * dy);
     }
 
+    //método un poco más robusto que permite costos dinámicos a diferencia del diseño original, permite implementación de semáforos.
     private float calcularCostoDinamico(Arista arista) {
         float base = arista.getWeight();
         float semaforoLoad = obtenerCargaSemaforo(arista);
