@@ -24,7 +24,13 @@ public class Controller {
         this.allAristas = new ArrayList<>();
         this.trafico = new TrafficController(this); // inyecta controlador para usar grafo
     }
-
+    /**
+     * Establece un nuevo tamaño para la grilla
+     * @param {number} size Nuevo tamaño de la grilla (ej: 8)
+     */
+    setGridSize(size) {
+        this.gridSize = size;
+    }
     public void inicializarintersecciones() {
         intersecciones.clear();
         interseccionesstackeadas.clear();
