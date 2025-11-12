@@ -1,7 +1,6 @@
-// Contiene el esqueleto/implementación del algoritmo de rutas (Dijkstra) sobre el grafo.
-// Usa los pesos de las aristas (0..1); Dijkstra busca minimizar la suma de pesos.
-// Nota: dado que los pesos están en 0..1, la suma tiene sentido. Si en el futuro quieres
-// considerar "steps" (número de aristas) como tie-breaker, se puede ajustar fácilmente.
+// Controlador de rutas: resuelve caminos óptimos sobre la red vial usando A*.
+// El costo combina el peso de la arista (0..1), la saturación del destino y la
+// heurística euclidiana entre nodos para priorizar rutas prometedoras.
 
 import java.util.*;
 
@@ -18,55 +17,83 @@ public class TrafficController {
             throw new GraphException("Origen o destino nulo");
         }
 
-        // Dijkstra: distancia mínima (float), prev map
-        Map<Interseccion, Float> dist = new HashMap<>();
-        Map<Interseccion, Interseccion> prev = new HashMap<>();
-        Set<Interseccion> visitados = new HashSet<>();
+        controller.actualizarSemaforos();
 
-        // Inicializar distancias infinitas
-        for (Interseccion n : controller.getInterseccionesStackeadas()) {
-            dist.put(n, Float.POSITIVE_INFINITY);
-            prev.put(n, null);
+        Map<Interseccion, Float> gScore = new HashMap<>();
+        Map<Interseccion, Float> fScore = new HashMap<>();
+        Map<Interseccion, Interseccion> cameFrom = new HashMap<>();
+        Set<Interseccion> cerrados = new HashSet<>();
+
+        for (Interseccion nodo : controller.getInterseccionesStackeadas()) {
+            gScore.put(nodo, Float.POSITIVE_INFINITY);
+            fScore.put(nodo, Float.POSITIVE_INFINITY);
+            cameFrom.put(nodo, null);
         }
-        dist.put(origen, 0f);
+        gScore.put(origen, 0f);
+        fScore.put(origen, heuristica(origen, destino));
 
-        PriorityQueue<Interseccion> pq = new PriorityQueue<>(Comparator.comparingDouble(dist::get));
-        pq.add(origen);
+        PriorityQueue<Interseccion> abiertos = new PriorityQueue<>(Comparator.comparingDouble(fScore::get));
+        abiertos.add(origen);
 
-        while (!pq.isEmpty()) {
-            Interseccion actual = pq.poll();
-            if (visitados.contains(actual)) continue;
-            visitados.add(actual);
+        while (!abiertos.isEmpty()) {
+            Interseccion actual = abiertos.poll();
+            if (actual.equals(destino)) {
+                return reconstruirRuta(cameFrom, destino);
+            }
+            if (!cerrados.add(actual)) {
+                continue;
+            }
 
-            if (actual.equals(destino)) break;
-
-            // Explorar vecinos (aristas salientes)
             for (Arista ar : actual.getVecinos()) {
                 Interseccion vecino = ar.getTo();
-                if (visitados.contains(vecino)) continue;
-                float pesoArista = ar.getWeight();
-                float alt = dist.get(actual) + pesoArista; // coste acumulado
+                if (cerrados.contains(vecino)) continue;
 
-                if (alt < dist.get(vecino)) {
-                    dist.put(vecino, alt);
-                    prev.put(vecino, actual);
-                    pq.remove(vecino); // actualizar prioridad si ya estaba
-                    pq.add(vecino);
+                float costoDinamico = calcularCostoDinamico(ar);
+                float tentativo = gScore.get(actual) + costoDinamico;
+
+                if (tentativo < gScore.get(vecino)) {
+                    cameFrom.put(vecino, actual);
+                    gScore.put(vecino, tentativo);
+                    float estimado = tentativo + heuristica(vecino, destino);
+                    fScore.put(vecino, estimado);
+                    abiertos.remove(vecino);
+                    abiertos.add(vecino);
                 }
             }
         }
 
-        // Reconstruir ruta
-        if (dist.get(destino).isInfinite()) {
-            throw new GraphException("No existe ruta entre " + origen + " y " + destino);
-        }
+        throw new GraphException("No existe ruta entre " + origen + " y " + destino);
+    }
 
+    private List<Interseccion> reconstruirRuta(Map<Interseccion, Interseccion> prev, Interseccion destino) {
         LinkedList<Interseccion> ruta = new LinkedList<>();
-        Interseccion u = destino;
-        while (u != null) {
-            ruta.addFirst(u);
-            u = prev.get(u);
+        Interseccion actual = destino;
+        while (actual != null) {
+            ruta.addFirst(actual);
+            actual = prev.get(actual);
         }
         return ruta;
+    }
+
+    private float heuristica(Interseccion a, Interseccion b) {
+        int dx = a.getRow() - b.getRow();
+        int dy = a.getCol() - b.getCol();
+        return (float) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    private float calcularCostoDinamico(Arista arista) {
+        float base = arista.getWeight();
+        float semaforoLoad = obtenerCargaSemaforo(arista);
+        float penalizacionSemaforo = 0.25f * semaforoLoad;
+        float costo = base + penalizacionSemaforo;
+        return Math.min(1f, Math.max(0f, costo));
+    }
+
+    private float obtenerCargaSemaforo(Arista arista) {
+        Semaforo semaforoDestino = arista.getTo().getSemaforo();
+        if (semaforoDestino == null) return 0f;
+        boolean esVertical = arista instanceof Avenida ||
+                arista.getFrom().getCol() == arista.getTo().getCol();
+        return esVertical ? semaforoDestino.getLoadNS() : semaforoDestino.getLoadEW();
     }
 }

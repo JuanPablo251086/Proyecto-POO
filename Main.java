@@ -24,19 +24,13 @@ public class Main {
     vista.exportConfigJSON("config.json");
     vista.exportJSONConRuta("red_vial_ruta.json", 1, 1, 5, 6);
 
-        // Debug: imprime vecinos y aristas
-        controlador.printallvecinosynodos();
-
-        // Prueba rápida de ruta mínima (ejemplo)
+        // Ejemplo interno: calcular ruta óptima sin imprimir resultado para evitar ruido en consola
         Interseccion origen = controlador.getInterseccion(1, 1);
         Interseccion destino = controlador.getInterseccion(5, 6);
         TrafficController traf = controlador.getTrafficController();
         try {
-            java.util.List<Interseccion> ruta = traf.calcularRutaMinima(origen, destino);
-            System.out.println("Ruta mínima encontrada:");
-            System.out.println(ruta);
-        } catch (GraphException ge) {
-            System.out.println("No se pudo calcular ruta: " + ge.getMessage());
+            traf.calcularRutaMinima(origen, destino);
+        } catch (GraphException ignored) {
         }
     }
 }

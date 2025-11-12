@@ -194,6 +194,7 @@
             border-left-color: #E65100;
         }
 
+
         .edge:hover {
             background: #333;
             transform: scaleY(1.5);
@@ -227,6 +228,16 @@
 
         .edge.congested-high::after {
             border-left-color: #C62828;
+        }
+
+        .edge.route {
+            background: #9C27B0;
+            border-color: #7B1FA2;
+            box-shadow: 0 0 12px rgba(156, 39, 176, 0.6);
+        }
+
+        .edge.route::after {
+            border-left-color: #9C27B0;
         }
 
         .info-panel {
@@ -380,7 +391,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
@@ -410,7 +421,7 @@
     <div class="container">
         <div class="header">
             <h1>Sistema de Control de Tráfico Urbano</h1>
-            <h2>Implementación del Algoritmo de Dijkstra para Optimización de Rutas</h2>
+            <h2>Implementación del Algoritmo A* para Optimización de Rutas</h2>
             <div class="university-info">
                 Proyecto de Estructuras de Datos y Algoritmos<br>
                 Simulación de Red de Transporte con Análisis de Congestión
@@ -419,7 +430,7 @@
 
         <div class="controls">
             <div class="control-group">
-                <h3>🎯 Planificación de Ruta</h3>
+                <h3>Planificación de Ruta</h3>
                 <button class="btn" onclick="setRouteMode('origin')">Seleccionar Origen</button>
                 <button class="btn" onclick="setRouteMode('destination')">Seleccionar Destino</button>
                 <button class="btn" onclick="calculateRoute()">Calcular Ruta Óptima</button>
@@ -427,7 +438,7 @@
             </div>
 
             <div class="control-group">
-                <h3>🚗 Control de Tráfico</h3>
+                <h3>Control de Tráfico</h3>
                 <div class="slider-container">
                     <label>Tráfico Global:</label>
                     <input type="range" id="globalTraffic" class="slider" min="0" max="100" value="30" onchange="updateGlobalTraffic(this.value)">
@@ -439,13 +450,14 @@
             </div>
 
             <div class="control-group">
-                <h3>⚙️ Configuración</h3>
+                <h3>Configuración</h3>
                 <div class="input-container">
                     <label for="gridSize">Dimensiones de la grilla:</label>
                     <input type="number" id="gridSize" min="3" max="100" value="6" onchange="updateGridSize(this.value)">
                     <span id="gridSizeValue">6x6</span>
                 </div>
                 <button class="btn" onclick="initializeGrid()">Reinicializar Grid</button>
+                <button class="btn" onclick="initializeGrid({ mode: 'json' })">Aplicar Datos JSON</button>
                 <button class="btn btn-secondary" onclick="showLegend()">Ver Leyenda</button>
                 <button class="btn btn-secondary" onclick="exportData()">Exportar Datos</button>
             </div>
@@ -471,7 +483,7 @@
                     </div>
                     <div class="legend-item">
                         <div class="legend-color" style="background: #6A1B9A;"></div>
-                        <span>Ruta Óptima (Dijkstra)</span>
+                        <span>Ruta Óptima (A*)</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color" style="background: #1565C0; border-radius: 2px; height: 6px;"></div>
@@ -487,13 +499,13 @@
             <div class="info-panel">
                 <h3>Análisis del Sistema</h3>
                 <div id="infoContent">
-                    <p><strong>Descripción:</strong> Sistema de simulación de red de tráfico implementando el algoritmo de Dijkstra para la búsqueda de caminos mínimos.</p>
+                    <p><strong>Descripción:</strong> Sistema de simulación de red de tráfico impulsado por el algoritmo A* para la búsqueda de caminos dirigidos y eficientes.</p>
                     <br>
                     <p><strong>Metodología:</strong></p>
                     <ul style="margin-left: 20px; margin-top: 10px;">
                         <li>Definir nodo origen mediante selección directa</li>
                         <li>Definir nodo destino en la red</li>
-                        <li>Ejecutar algoritmo de Dijkstra para encontrar la ruta de menor peso</li>
+                        <li>Ejecutar A* para encontrar la ruta de menor costo guiado por heurística</li>
                         <li>Ajustar parámetros de congestión (0-100 veh/min)</li>
                         <li>Analizar resultados y métricas de rendimiento</li>
                     </ul>
@@ -514,6 +526,10 @@
                         <div class="stat-value" id="avgTraffic">0</div>
                         <div class="stat-label">Congestión Media</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="dataSourceTag">Procedural</div>
+                        <div class="stat-label">Fuente de Datos</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -530,28 +546,28 @@
         </div>
     </div>
 
-    <script>
-        // Simulación del sistema Java en JavaScript
+        <script>
         class Intersection {
             constructor(row, col) {
                 this.row = row;
                 this.col = col;
-                this.weight = 0;
+                this.id = `${row},${col}`;
                 this.neighbors = [];
+                this.loadNS = 0;
+                this.loadEW = 0;
             }
 
-            calculateNeighbors() {
-                // Lógica original del código Java pero con gridSize dinámico
+            calculateNeighbors(limit = gridSize) {
                 let vrow = (this.col % 2 === 1) ? this.row - 1 : this.row + 1;
                 let vcol = this.col;
-                if (vrow < 1 || vrow > gridSize || vcol < 1 || vcol > gridSize) {
+                if (vrow < 1 || vrow > limit || vcol < 1 || vcol > limit) {
                     vrow = 0;
                     vcol = 0;
                 }
 
                 let hrow = this.row;
                 let hcol = (this.row % 2 === 1) ? this.col + 1 : this.col - 1;
-                if (hrow < 1 || hrow > gridSize || hcol < 1 || hcol > gridSize) {
+                if (hrow < 1 || hrow > limit || hcol < 1 || hcol > limit) {
                     hrow = 0;
                     hcol = 0;
                 }
@@ -560,7 +576,7 @@
             }
 
             toString() {
-                return `(${this.row},${this.col})`;
+                return `(${this.id})`;
             }
         }
 
@@ -568,59 +584,131 @@
             constructor(from, to, type) {
                 this.from = from;
                 this.to = to;
-                this.type = type; // 'calle' o 'avenida'
+                this.type = type;
                 this.vehiclesPorMin = 0;
                 this.weight = 0;
-                this.weightMultiplier = type === 'calle' ? 1.0 : 0.8; // avenidas más eficientes
+                this.weightMultiplier = type === 'calle' ? 1.20 : 0.80;
             }
 
             calculateWeight() {
-                let raw = this.vehiclesPorMin / 100.0; // MAX_VEH_PER_MIN = 100
-                raw *= this.weightMultiplier;
+                const divisor = Math.max(1, networkConfig.maxVehPerMin);
+                const normalized = this.vehiclesPorMin / divisor;
+                const multiplier = this.type === 'calle' ? networkConfig.multCalle : networkConfig.multAvenida;
+                this.weightMultiplier = multiplier;
+                const raw = normalized * multiplier;
                 this.weight = Math.max(0, Math.min(1, raw));
             }
 
             setVehiclesPorMin(vpm) {
-                this.vehiclesPorMin = Math.max(0, vpm);
+                this.vehiclesPorMin = Math.max(0, parseInt(vpm, 10) || 0);
                 this.calculateWeight();
+            }
+
+            getDynamicCost() {
+                const load = this.type === 'avenida' ? this.to.loadNS : this.to.loadEW;
+                const penalty = 0.25 * load;
+                return Math.max(0, Math.min(1, this.weight + penalty));
             }
         }
 
-        // Variables globales
+        const networkCache = { data: null, promise: null };
+
         let intersections = [];
         let edges = [];
         let grid = [];
         let selectedOrigin = null;
         let selectedDestination = null;
         let currentRoute = [];
-        let routeMode = null; // 'origin', 'destination', null
+        let routeMode = null;
         let selectedEdge = null;
-        let gridSize = 6; // Tamaño dinámico de la grilla
+        let gridSize = 6;
+        let routeMetrics = null;
+        let dataSource = 'procedural';
+        let networkConfig = {
+            maxVehPerMin: 100,
+            multCalle: 1.20,
+            multAvenida: 0.80
+        };
 
-        // Inicializar el sistema
-        function initializeSystem() {
+        function resetSelections() {
+            selectedOrigin = null;
+            selectedDestination = null;
+            currentRoute = [];
+            routeMode = null;
+            selectedEdge = null;
+            routeMetrics = null;
+        }
+
+        async function loadNetworkData(forceRefresh = false) {
+            if (!forceRefresh && networkCache.data) {
+                return networkCache.data;
+            }
+            if (!forceRefresh && networkCache.promise) {
+                return networkCache.promise;
+            }
+            networkCache.promise = fetch('red_vial.json', { cache: 'no-store' })
+                .then(resp => resp.ok ? resp.json() : null)
+                .then(data => {
+                    networkCache.data = data;
+                    return data;
+                })
+                .catch(() => null);
+            return networkCache.promise;
+        }
+
+        function applyNetworkConfig(config = {}) {
+            if (!config) return;
+            if (typeof config.maxVehPerMin === 'number') {
+                networkConfig.maxVehPerMin = config.maxVehPerMin;
+            }
+            if (typeof config.multCalle === 'number') {
+                networkConfig.multCalle = config.multCalle;
+            }
+            if (typeof config.multAvenida === 'number') {
+                networkConfig.multAvenida = config.multAvenida;
+            }
+        }
+
+        async function initializeSystem({ mode = dataSource, force = false } = {}) {
             intersections = [];
             edges = [];
             grid = [];
-            
-            // Crear intersecciones (gridSize x gridSize)
-            for (let r = 1; r <= gridSize; r++) {
+            routeMetrics = null;
+
+            let data = null;
+            if (mode === 'json') {
+                data = await loadNetworkData(force);
+            }
+
+            if (data) {
+                dataSource = 'json';
+                applyNetworkConfig(data.config);
+                buildGraphFromJson(data);
+            } else {
+                dataSource = 'procedural';
+                buildProceduralGraph(gridSize);
+            }
+
+            recomputeIntersectionLoads();
+            updateStats();
+        }
+
+        function buildProceduralGraph(size) {
+            for (let r = 1; r <= size; r++) {
                 grid[r] = [];
-                for (let c = 1; c <= gridSize; c++) {
-                    const intersection = new Intersection(r, c);
-                    grid[r][c] = intersection;
-                    intersections.push(intersection);
+                for (let c = 1; c <= size; c++) {
+                    const node = new Intersection(r, c);
+                    grid[r][c] = node;
+                    intersections.push(node);
                 }
             }
 
-            // Crear aristas basado en la lógica original
-            for (let r = 1; r <= gridSize; r++) {
-                for (let c = 1; c <= gridSize; c++) {
+            for (let r = 1; r <= size; r++) {
+                for (let c = 1; c <= size; c++) {
                     const intersection = grid[r][c];
-                    const neighbors = intersection.calculateNeighbors();
-                    
-                    // Vecino vertical (Avenida)
-                    if (neighbors[0] !== 0 && neighbors[1] !== 0) {
+                    const neighbors = intersection.calculateNeighbors(size);
+
+                    if (neighbors[0] && neighbors[1]) {
                         const neighbor = grid[neighbors[0]][neighbors[1]];
                         if (!edgeExists(intersection, neighbor)) {
                             const edge = new Edge(intersection, neighbor, 'avenida');
@@ -628,9 +716,8 @@
                             intersection.neighbors.push(edge);
                         }
                     }
-                    
-                    // Vecino horizontal (Calle)
-                    if (neighbors[2] !== 0 && neighbors[3] !== 0) {
+
+                    if (neighbors[2] && neighbors[3]) {
                         const neighbor = grid[neighbors[2]][neighbors[3]];
                         if (!edgeExists(intersection, neighbor)) {
                             const edge = new Edge(intersection, neighbor, 'calle');
@@ -640,94 +727,190 @@
                     }
                 }
             }
+        }
 
-            updateStats();
+        function buildGraphFromJson(data) {
+            const nodes = new Map();
+            let maxRow = 0;
+            let maxCol = 0;
+
+            (data.semaforos || []).forEach(info => {
+                const id = info.id || `${info.fila},${info.columna}`;
+                const node = new Intersection(info.fila, info.columna);
+                node.loadNS = parseFloat(info.loadNS ?? 0);
+                node.loadEW = parseFloat(info.loadEW ?? 0);
+                nodes.set(id, node);
+                maxRow = Math.max(maxRow, info.fila);
+                maxCol = Math.max(maxCol, info.columna);
+            });
+
+            (data.aristas || []).forEach(raw => {
+                const [fromRow, fromCol] = raw.origen.split(',').map(Number);
+                const [toRow, toCol] = raw.destino.split(',').map(Number);
+                const fromId = raw.origen;
+                const toId = raw.destino;
+                maxRow = Math.max(maxRow, fromRow, toRow);
+                maxCol = Math.max(maxCol, fromCol, toCol);
+                if (!nodes.has(fromId)) nodes.set(fromId, new Intersection(fromRow, fromCol));
+                if (!nodes.has(toId)) nodes.set(toId, new Intersection(toRow, toCol));
+            });
+
+            gridSize = Math.max(maxRow, maxCol);
+
+            for (let r = 1; r <= gridSize; r++) {
+                grid[r] = [];
+                for (let c = 1; c <= gridSize; c++) {
+                    const id = `${r},${c}`;
+                    if (!nodes.has(id)) {
+                        nodes.set(id, new Intersection(r, c));
+                    }
+                    grid[r][c] = nodes.get(id);
+                }
+            }
+
+            intersections = Array.from(nodes.values());
+
+            (data.aristas || []).forEach(raw => {
+                const from = nodes.get(raw.origen);
+                const to = nodes.get(raw.destino);
+                if (!from || !to) return;
+                const tipo = raw.tipo && raw.tipo.toLowerCase().includes('avenida') ? 'avenida' : 'calle';
+                const edge = new Edge(from, to, tipo);
+                edge.setVehiclesPorMin(raw.vehiculosPorMin ?? 0);
+                edges.push(edge);
+                from.neighbors.push(edge);
+            });
         }
 
         function edgeExists(a, b) {
-            return edges.some(edge => 
-                (edge.from === a && edge.to === b) || 
-                (edge.from === b && edge.to === a)
+            return edges.some(edge =>
+                (edge.from === a && edge.to === b) || (edge.from === b && edge.to === a)
             );
         }
 
-        // Algoritmo de Dijkstra
-        function dijkstra(origin, destination) {
-            const dist = new Map();
-            const prev = new Map();
-            const visited = new Set();
-            
-            intersections.forEach(node => {
-                dist.set(node, Infinity);
-                prev.set(node, null);
+        function recomputeIntersectionLoads() {
+            const accumulator = new Map();
+
+            edges.forEach(edge => {
+                const bucket = edge.type === 'avenida' ? 'vertical' : 'horizontal';
+                const info = accumulator.get(edge.to.id) || { vertical: [], horizontal: [] };
+                info[bucket].push(edge.weight);
+                accumulator.set(edge.to.id, info);
             });
-            dist.set(origin, 0);
 
-            const pq = [origin];
-            
-            while (pq.length > 0) {
-                // Encontrar nodo con distancia mínima
-                let current = pq.reduce((min, node) => 
-                    dist.get(node) < dist.get(min) ? node : min
-                );
-                
-                pq.splice(pq.indexOf(current), 1);
-                
-                if (visited.has(current)) continue;
-                visited.add(current);
-                
-                if (current === destination) break;
-                
-                current.neighbors.forEach(edge => {
-                    const neighbor = edge.to;
-                    if (visited.has(neighbor)) return;
-                    
-                    const alt = dist.get(current) + edge.weight;
-                    if (alt < dist.get(neighbor)) {
-                        dist.set(neighbor, alt);
-                        prev.set(neighbor, current);
-                        if (!pq.includes(neighbor)) {
-                            pq.push(neighbor);
-                        }
-                    }
-                });
-            }
+            intersections.forEach(node => {
+                const info = accumulator.get(node.id) || { vertical: [], horizontal: [] };
+                node.loadNS = average(info.vertical);
+                node.loadEW = average(info.horizontal);
+            });
+        }
 
-            // Reconstruir ruta
-            if (dist.get(destination) === Infinity) {
-                throw new Error(`No existe ruta entre ${origin} y ${destination}`);
-            }
+        function average(list) {
+            if (!list.length) return 0;
+            return list.reduce((sum, value) => sum + value, 0) / list.length;
+        }
 
+        function heuristic(a, b) {
+            const dx = a.row - b.row;
+            const dy = a.col - b.col;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function reconstructRoute(prev, current) {
             const route = [];
-            let u = destination;
-            while (u !== null) {
-                route.unshift(u);
-                u = prev.get(u);
+            let node = current;
+            while (node) {
+                route.unshift(node);
+                node = prev.get(node);
             }
             return route;
         }
 
-        // Renderizar la grilla
+        function astar(origin, destination) {
+            const gScore = new Map();
+            const fScore = new Map();
+            const cameFrom = new Map();
+            const openSet = new Set();
+            const closedSet = new Set();
+
+            intersections.forEach(node => {
+                gScore.set(node, Infinity);
+                fScore.set(node, Infinity);
+            });
+
+            gScore.set(origin, 0);
+            fScore.set(origin, heuristic(origin, destination));
+            openSet.add(origin);
+
+            let expanded = 0;
+            let requeued = 0;
+
+            while (openSet.size > 0) {
+                let current = null;
+                let minScore = Infinity;
+                openSet.forEach(node => {
+                    const score = fScore.get(node) ?? Infinity;
+                    if (score < minScore) {
+                        minScore = score;
+                        current = node;
+                    }
+                });
+
+                if (!current) break;
+
+                if (current === destination) {
+                    return {
+                        route: reconstructRoute(cameFrom, current),
+                        metrics: {
+                            cost: gScore.get(destination),
+                            expanded,
+                            requeued,
+                            heuristic: heuristic(origin, destination)
+                        }
+                    };
+                }
+
+                openSet.delete(current);
+                closedSet.add(current);
+                expanded++;
+
+                current.neighbors.forEach(edge => {
+                    const neighbor = edge.to;
+                    if (closedSet.has(neighbor)) return;
+
+                    const tentative = gScore.get(current) + edge.getDynamicCost();
+                    if (tentative < (gScore.get(neighbor) ?? Infinity)) {
+                        cameFrom.set(neighbor, current);
+                        gScore.set(neighbor, tentative);
+                        fScore.set(neighbor, tentative + heuristic(neighbor, destination));
+                        if (openSet.has(neighbor)) {
+                            requeued++;
+                        }
+                        openSet.add(neighbor);
+                    }
+                });
+            }
+
+            throw new Error(`No existe ruta entre ${origin} y ${destination}`);
+        }
+
         function renderGrid() {
             const gridElement = document.getElementById('trafficGrid');
             gridElement.innerHTML = '';
-            
-            // Configurar CSS Grid dinámicamente
             gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             gridElement.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
 
-            // Crear intersecciones
             for (let r = 1; r <= gridSize; r++) {
                 for (let c = 1; c <= gridSize; c++) {
-                    const intersection = grid[r][c];
+                    const intersection = grid[r] && grid[r][c];
+                    if (!intersection) continue;
                     const element = document.createElement('div');
                     element.className = 'intersection';
                     element.textContent = `${r},${c}`;
                     element.style.gridColumn = c;
                     element.style.gridRow = r;
                     element.onclick = () => selectIntersection(intersection);
-                    
-                    // Aplicar clases de estado
+
                     if (intersection === selectedOrigin) {
                         element.classList.add('origin');
                     } else if (intersection === selectedDestination) {
@@ -735,106 +918,100 @@
                     } else if (currentRoute.includes(intersection)) {
                         element.classList.add('route');
                     }
-                    
+
                     gridElement.appendChild(element);
                 }
             }
 
-            // Crear aristas
-            edges.forEach((edge, index) => {
+            edges.forEach(edge => {
                 const fromPos = getGridPosition(edge.from);
                 const toPos = getGridPosition(edge.to);
-                
                 const edgeElement = document.createElement('div');
                 edgeElement.className = `edge ${edge.type}`;
                 edgeElement.onclick = () => selectEdge(edge);
-                
-                // Calcular posición y rotación
+
                 const deltaX = toPos.x - fromPos.x;
                 const deltaY = toPos.y - fromPos.y;
                 const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                 const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-                
                 const centerX = (fromPos.x + toPos.x) / 2;
                 const centerY = (fromPos.y + toPos.y) / 2;
-                
+
                 edgeElement.style.width = `${length}px`;
-                edgeElement.style.height = '4px';
-                edgeElement.style.left = `${centerX - length/2}px`;
-                edgeElement.style.top = `${centerY - 2}px`;
+                edgeElement.style.height = `6px`;
+                edgeElement.style.left = `${centerX - length / 2}px`;
+                edgeElement.style.top = `${centerY - 3}px`;
                 edgeElement.style.transform = `rotate(${angle}deg)`;
-                
-                // Color basado en congestión
-                const congestionLevel = edge.weight;
-                if (congestionLevel < 0.3) {
+
+                const cost = edge.getDynamicCost();
+                if (cost < 0.33) {
                     edgeElement.classList.add('congested-low');
-                } else if (congestionLevel < 0.7) {
+                } else if (cost < 0.66) {
                     edgeElement.classList.add('congested-medium');
                 } else {
                     edgeElement.classList.add('congested-high');
                 }
-                
+                if (isEdgeInCurrentRoute(edge)) {
+                    edgeElement.classList.add('route');
+                }
+                edgeElement.title = `Peso dinámico: ${cost.toFixed(3)} | Tráfico: ${edge.vehiclesPorMin} veh/min`;
+
                 gridElement.appendChild(edgeElement);
             });
         }
 
         function getGridPosition(intersection) {
             const gridElement = document.getElementById('trafficGrid');
-            const gridRect = gridElement.getBoundingClientRect();
-            const cellWidth = gridRect.width / gridSize;
-            const cellHeight = gridRect.height / gridSize;
-            
-            return {
-                x: (intersection.col - 0.5) * cellWidth,
-                y: (intersection.row - 0.5) * cellHeight
-            };
+            const rect = gridElement.getBoundingClientRect();
+            const cellWidth = rect.width / gridSize;
+            const cellHeight = rect.height / gridSize;
+            const x = (intersection.col - 0.5) * cellWidth;
+            const y = (intersection.row - 0.5) * cellHeight;
+            return { x, y };
         }
 
-        // Funciones de interfaz
+        function isEdgeInCurrentRoute(edge) {
+            for (let i = 0; i < currentRoute.length - 1; i++) {
+                if (currentRoute[i] === edge.from && currentRoute[i + 1] === edge.to) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function selectIntersection(intersection) {
             if (routeMode === 'origin') {
                 selectedOrigin = intersection;
-                routeMode = null;
-                updateInfoPanel(`Nodo origen configurado: ${intersection}`);
+                updateInfoPanel(`Nodo origen seleccionado: ${intersection}`);
             } else if (routeMode === 'destination') {
                 selectedDestination = intersection;
-                routeMode = null;
-                updateInfoPanel(`Nodo destino configurado: ${intersection}`);
+                updateInfoPanel(`Nodo destino seleccionado: ${intersection}`);
             } else {
-                updateInfoPanel(`
-                    <h4>Análisis del Nodo ${intersection}</h4>
-                    <p><strong>Coordenadas:</strong> Fila ${intersection.row}, Columna ${intersection.col}</p>
-                    <p><strong>Grado del nodo:</strong> ${intersection.neighbors.length} aristas salientes</p>
-                    <p><strong>Conectividad:</strong></p>
-                    <ul style="margin-left: 20px;">
-                        ${intersection.neighbors.map(edge => 
-                            `<li>Arista ${edge.type} → ${edge.to} | Flujo: ${edge.vehiclesPorMin} veh/min | Peso: ${edge.weight.toFixed(4)}</li>`
-                        ).join('')}
-                    </ul>
-                    <p><strong>Nota:</strong> Este nodo sigue el patrón de conectividad hexagonal del sistema original.</p>
-                `);
+                updateInfoPanel('Define si deseas seleccionar origen o destino antes de hacer clic en una intersección.');
+                return;
             }
             renderGrid();
         }
 
         function selectEdge(edge) {
             selectedEdge = edge;
+            const max = networkConfig.maxVehPerMin;
             updateInfoPanel(`
                 <h4>Análisis de Arista: ${edge.from} → ${edge.to}</h4>
                 <p><strong>Tipo de vía:</strong> ${edge.type.charAt(0).toUpperCase() + edge.type.slice(1)}</p>
                 <p><strong>Flujo vehicular:</strong> ${edge.vehiclesPorMin} vehículos/minuto</p>
-                <p><strong>Peso normalizado:</strong> ${edge.weight.toFixed(4)} (0.0 = libre, 1.0 = saturado)</p>
-                <p><strong>Multiplicador de tipo:</strong> ${edge.weightMultiplier}</p>
-                <p><strong>Capacidad teórica máxima:</strong> 100 vehículos/minuto</p>
+                <p><strong>Peso normalizado:</strong> ${edge.weight.toFixed(4)}</p>
+                <p><strong>Peso dinámico (A*):</strong> ${edge.getDynamicCost().toFixed(4)}</p>
+                <p><strong>Multiplicador aplicado:</strong> ${edge.weightMultiplier.toFixed(2)}</p>
                 <div style="margin-top: 15px; border: 1px solid #ddd; padding: 15px;">
                     <label><strong>Ajuste de parámetros:</strong></label>
-                    <input type="range" min="0" max="100" value="${edge.vehiclesPorMin}" 
+                    <input type="range" min="0" max="${max}" value="${edge.vehiclesPorMin}" 
                            onchange="updateEdgeTraffic(${edges.indexOf(edge)}, this.value)"
                            style="width: 100%; margin: 10px 0;">
                     <div style="display: flex; justify-content: space-between;">
                         <span>0 veh/min</span>
                         <span><strong>${edge.vehiclesPorMin} veh/min</strong></span>
-                        <span>100 veh/min</span>
+                        <span>${max} veh/min</span>
                     </div>
                 </div>
             `);
@@ -842,38 +1019,42 @@
 
         function setRouteMode(mode) {
             routeMode = mode;
-            updateInfoPanel(mode === 'origin' ? 
-                'Seleccione el nodo origen haciendo clic en una intersección de la red' :
-                'Seleccione el nodo destino haciendo clic en una intersección de la red'
+            updateInfoPanel(
+                mode === 'origin'
+                    ? 'Ahora selecciona el nodo origen para el algoritmo A*.'
+                    : 'Selecciona el nodo destino para completar la ruta.'
             );
         }
 
         function calculateRoute() {
             if (!selectedOrigin || !selectedDestination) {
-                alert('Error: Debe definir tanto el nodo origen como el nodo destino antes de ejecutar el algoritmo');
+                alert('Error: define origen y destino antes de ejecutar la búsqueda.');
                 return;
             }
 
             try {
-                currentRoute = dijkstra(selectedOrigin, selectedDestination);
-                const totalWeight = calculateRouteWeight(currentRoute);
-                
+                const result = astar(selectedOrigin, selectedDestination);
+                currentRoute = result.route;
+                routeMetrics = result.metrics;
+                const totalWeight = routeMetrics.cost ?? calculateRouteWeight(currentRoute);
+
                 updateInfoPanel(`
-                    <h4>Resultado del Algoritmo de Dijkstra</h4>
+                    <h4>Resultado del Algoritmo A*</h4>
                     <p><strong>Nodo Origen:</strong> ${selectedOrigin}</p>
                     <p><strong>Nodo Destino:</strong> ${selectedDestination}</p>
-                    <p><strong>Número de nodos en la ruta:</strong> ${currentRoute.length}</p>
-                    <p><strong>Número de aristas:</strong> ${currentRoute.length - 1}</p>
-                    <p><strong>Peso total acumulado:</strong> ${totalWeight.toFixed(4)}</p>
+                    <p><strong>Nodos en la ruta:</strong> ${currentRoute.length}</p>
+                    <p><strong>Costo heurístico inicial:</strong> ${routeMetrics.heuristic.toFixed(3)}</p>
+                    <p><strong>Costo real acumulado:</strong> ${totalWeight.toFixed(3)}</p>
+                    <p><strong>Nodos expandidos:</strong> ${routeMetrics.expanded}</p>
+                    <p><strong>Reencolados:</strong> ${routeMetrics.requeued}</p>
                     <div class="route-info">
                         <h5>Secuencia de nodos:</h5>
                         <ol style="margin-left: 20px;">
-                            ${currentRoute.map((intersection, index) => 
+                            ${currentRoute.map((intersection, index) =>
                                 `<li>Nodo ${intersection}${index === 0 ? ' (origen)' : index === currentRoute.length - 1 ? ' (destino)' : ''}</li>`
                             ).join('')}
                         </ol>
                     </div>
-                    <p><strong>Complejidad:</strong> O((V + E) log V) donde V=${intersections.length} nodos y E=${edges.length} aristas</p>
                 `);
                 renderGrid();
             } catch (error) {
@@ -882,40 +1063,37 @@
         }
 
         function calculateRouteWeight(route) {
-            let totalWeight = 0;
+            let total = 0;
             for (let i = 0; i < route.length - 1; i++) {
                 const current = route[i];
                 const next = route[i + 1];
                 const edge = current.neighbors.find(e => e.to === next);
                 if (edge) {
-                    totalWeight += edge.weight;
+                    total += edge.getDynamicCost();
                 }
             }
-            return totalWeight;
+            return total;
         }
 
         function clearRoute() {
-            selectedOrigin = null;
-            selectedDestination = null;
-            currentRoute = [];
-            routeMode = null;
+            resetSelections();
             updateInfoPanel('Ruta limpiada. Selecciona nuevo origen y destino.');
             renderGrid();
         }
 
         function randomizeTraffic() {
             edges.forEach(edge => {
-                edge.setVehiclesPorMin(Math.floor(Math.random() * 81));
+                edge.setVehiclesPorMin(Math.floor(Math.random() * networkConfig.maxVehPerMin));
             });
+            recomputeIntersectionLoads();
             updateStats();
             renderGrid();
             updateInfoPanel('Tráfico aleatorio generado en todas las aristas.');
         }
 
         function clearAllTraffic() {
-            edges.forEach(edge => {
-                edge.setVehiclesPorMin(0);
-            });
+            edges.forEach(edge => edge.setVehiclesPorMin(0));
+            recomputeIntersectionLoads();
             updateStats();
             renderGrid();
             updateInfoPanel('Tráfico limpiado en todas las aristas.');
@@ -923,48 +1101,75 @@
 
         function updateGlobalTraffic(value) {
             document.getElementById('globalTrafficValue').textContent = `${value} vehículos/minuto`;
-            edges.forEach(edge => {
-                edge.setVehiclesPorMin(parseInt(value));
-            });
+            edges.forEach(edge => edge.setVehiclesPorMin(parseInt(value, 10) || 0));
+            recomputeIntersectionLoads();
             updateStats();
             renderGrid();
         }
 
         function updateEdgeTraffic(edgeIndex, value) {
-            edges[edgeIndex].setVehiclesPorMin(parseInt(value));
+            const edge = edges[edgeIndex];
+            if (!edge) return;
+            edge.setVehiclesPorMin(parseInt(value, 10) || 0);
+            recomputeIntersectionLoads();
             updateStats();
             renderGrid();
-            selectEdge(edges[edgeIndex]); // Actualizar panel de info
+            selectEdge(edge);
         }
 
         function updateStats() {
-            const avgTraffic = edges.reduce((sum, edge) => sum + edge.vehiclesPorMin, 0) / edges.length;
+            const avgTraffic = edges.length === 0
+                ? 0
+                : edges.reduce((sum, edge) => sum + edge.vehiclesPorMin, 0) / edges.length;
             document.getElementById('avgTraffic').textContent = Math.round(avgTraffic);
             document.getElementById('totalEdges').textContent = edges.length;
             document.getElementById('totalIntersections').textContent = intersections.length;
+            document.getElementById('dataSourceTag').textContent = dataSource === 'json' ? 'JSON' : 'Procedural';
         }
 
         function updateGridSize(value) {
-            gridSize = parseInt(value);
+            const parsed = parseInt(value, 10) || gridSize;
+            gridSize = Math.max(3, parsed);
             document.getElementById('gridSizeValue').textContent = `${gridSize}x${gridSize}`;
             document.getElementById('gridTitle').textContent = `Red de Intersecciones (${gridSize}x${gridSize})`;
-            
-            // Reinicializar automáticamente con el nuevo tamaño
-            initializeGrid();
+            initializeGrid({ mode: 'procedural', size: gridSize, message: 'Grilla procedural actualizada.' });
         }
 
         function updateInfoPanel(content) {
             document.getElementById('infoContent').innerHTML = content;
         }
 
-        function initializeGrid() {
-            selectedOrigin = null;
-            selectedDestination = null;
-            currentRoute = [];
-            routeMode = null;
-            initializeSystem();
+        async function initializeGrid(options = {}) {
+            const mode = options.mode || dataSource;
+            if (options.size) {
+                gridSize = options.size;
+            }
+            resetSelections();
+            await initializeSystem({ mode, force: options.force === true });
+            syncGridMetadata();
             renderGrid();
-            updateInfoPanel('Sistema reinicializado.');
+            const defaultMessage = dataSource === 'json'
+                ? 'Datos JSON aplicados y listos para la simulación.'
+                : 'Grilla procedural lista para ajustes.';
+            updateInfoPanel(options.message || defaultMessage);
+        }
+
+        function syncGridMetadata() {
+            const title = document.getElementById('gridTitle');
+            const gridLabel = document.getElementById('gridSizeValue');
+            const gridInput = document.getElementById('gridSize');
+            if (title) title.textContent = `Red de Intersecciones (${gridSize}x${gridSize})`;
+            if (gridLabel) gridLabel.textContent = `${gridSize}x${gridSize}`;
+            if (gridInput) gridInput.value = gridSize;
+
+            const slider = document.getElementById('globalTraffic');
+            if (slider) {
+                slider.max = networkConfig.maxVehPerMin;
+                if (parseInt(slider.value, 10) > networkConfig.maxVehPerMin) {
+                    slider.value = networkConfig.maxVehPerMin;
+                }
+                document.getElementById('globalTrafficValue').textContent = `${slider.value} vehículos/minuto`;
+            }
         }
 
         function showTrafficModal() {
@@ -975,20 +1180,38 @@
             document.getElementById('trafficModal').style.display = 'none';
         }
 
+        function showLegend() {
+            updateInfoPanel(`
+                <h4>Leyenda rápida</h4>
+                <ul style="margin-left: 20px;">
+                    <li>Verde: intersección disponible</li>
+                    <li>Azul/Naranja: origen y destino seleccionados</li>
+                    <li>Morado: nodos en la ruta óptima</li>
+                    <li>Aristas verdes/amarillas/rojas: baja, media y alta congestión</li>
+                </ul>
+            `);
+        }
+
         function exportData() {
             const data = {
-                intersections: intersections.map(i => ({row: i.row, col: i.col})),
+                config: networkConfig,
+                intersections: intersections.map(i => ({
+                    row: i.row,
+                    col: i.col,
+                    loadNS: i.loadNS,
+                    loadEW: i.loadEW
+                })),
                 edges: edges.map(e => ({
-                    from: {row: e.from.row, col: e.from.col},
-                    to: {row: e.to.row, col: e.to.col},
+                    from: { row: e.from.row, col: e.from.col },
+                    to: { row: e.to.row, col: e.to.col },
                     type: e.type,
                     vehiclesPorMin: e.vehiclesPorMin,
                     weight: e.weight
                 })),
-                route: currentRoute.map(i => ({row: i.row, col: i.col}))
+                route: currentRoute.map(i => ({ row: i.row, col: i.col }))
             };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -997,13 +1220,10 @@
             URL.revokeObjectURL(url);
         }
 
-        // Inicializar al cargar la página
-        window.onload = function() {
-            initializeSystem();
-            renderGrid();
-        };
+        window.addEventListener('load', () => {
+            initializeGrid({ mode: 'json' });
+        });
 
-        // Cerrar modal al hacer clic fuera
         window.onclick = function(event) {
             const modal = document.getElementById('trafficModal');
             if (event.target === modal) {
@@ -1011,5 +1231,6 @@
             }
         };
     </script>
+
 </body>
 </html>
