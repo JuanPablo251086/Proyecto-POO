@@ -1,7 +1,3 @@
-/**
- * Clase Vista - Maneja toda la interfaz gráfica y eventos del usuario
- * Patrón MVC: Separación de lógica y presentación
- */
 export class Vista {
     constructor(controller) {
         this.controller = controller;
@@ -326,20 +322,26 @@ export class Vista {
         const panel = document.getElementById('infoPanel');
         if (!panel) return;
 
-        let html = '<h3 class="text-lg font-bold mb-2">Información</h3>';
+        let html = '';
 
         if (this.selectedOrigin) {
-            html += `<p><strong>Origen:</strong> (${this.selectedOrigin.row}, ${this.selectedOrigin.col})</p>`;
+            html += `<div style="background: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #4caf50;">
+                <strong style="color: #2e7d32;">🟢 Origen</strong><br>
+                <span style="color: #555;">Intersección (${this.selectedOrigin.row}, ${this.selectedOrigin.col})</span>
+            </div>`;
         }
 
         if (this.selectedDestination) {
-            html += `<p><strong>Destino:</strong> (${this.selectedDestination.row}, ${this.selectedDestination.col})</p>`;
+            html += `<div style="background: #ffebee; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #f44336;">
+                <strong style="color: #c62828;">🔴 Destino</strong><br>
+                <span style="color: #555;">Intersección (${this.selectedDestination.row}, ${this.selectedDestination.col})</span>
+            </div>`;
         }
 
         if (!this.selectedOrigin) {
-            html += '<p class="text-gray-600 mt-2">Haz clic para seleccionar origen</p>';
+            html += '<p style="color: #666;">👆 Haz clic en el mapa para seleccionar el <strong>origen</strong></p>';
         } else if (!this.selectedDestination) {
-            html += '<p class="text-gray-600 mt-2">Haz clic para seleccionar destino</p>';
+            html += '<p style="color: #666;">👆 Haz clic en el mapa para seleccionar el <strong>destino</strong></p>';
         }
 
         panel.innerHTML = html;
@@ -353,19 +355,49 @@ export class Vista {
         if (!panel) return;
 
         if (!this.currentPath || !this.currentPath.encontrada) {
-            panel.innerHTML = '<p class="text-red-600">No se encontró ruta</p>';
+            panel.innerHTML = `
+                <div class="route-info" style="background: #ffebee; border-color: #f44336;">
+                    <p style="color: #c62828; font-weight: bold; text-align: center;">
+                        ❌ No se encontró una ruta válida
+                    </p>
+                </div>
+            `;
             return;
         }
 
+        const algoritmo = document.getElementById('algoritmoSelect')?.value === 'astar' ? 'A*' : 'Dijkstra';
+        
         const html = `
-            <h3 class="text-lg font-bold mb-2">Ruta Calculada</h3>
-            <p><strong>Peso total:</strong> ${this.currentPath.pesoTotal.toFixed(3)}</p>
-            <p><strong>Intersecciones:</strong> ${this.currentPath.ruta.length}</p>
-            <p><strong>Aristas:</strong> ${this.currentPath.aristas.length}</p>
-            <div class="mt-2 text-sm">
-                <strong>Camino:</strong>
-                <div class="max-h-32 overflow-y-auto mt-1">
-                    ${this.currentPath.ruta.map(i => `(${i.row},${i.col})`).join(' → ')}
+            <div class="route-info">
+                <h3 style="margin-bottom: 15px;">✅ Ruta Encontrada (${algoritmo})</h3>
+                
+                <div class="route-metrics">
+                    <div class="metric">
+                        <div class="metric-value">${this.currentPath.pesoTotal.toFixed(3)}</div>
+                        <div class="metric-label">Peso Total</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${this.currentPath.ruta.length}</div>
+                        <div class="metric-label">Intersecciones</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${this.currentPath.aristas.length}</div>
+                        <div class="metric-label">Aristas</div>
+                    </div>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                    <strong style="color: #667eea; display: block; margin-bottom: 10px;">🗺️ Camino Óptimo:</strong>
+                    <div style="max-height: 100px; overflow-y: auto; font-size: 0.9em; color: #555; line-height: 1.6;">
+                        ${this.currentPath.ruta.map((i, idx) => {
+                            const isFirst = idx === 0;
+                            const isLast = idx === this.currentPath.ruta.length - 1;
+                            let badge = '';
+                            if (isFirst) badge = '<span style="color: #4caf50; font-weight: bold;">[Origen]</span>';
+                            if (isLast) badge = '<span style="color: #f44336; font-weight: bold;">[Destino]</span>';
+                            return `<span style="font-family: monospace;">(${i.row},${i.col})</span> ${badge}`;
+                        }).join(' <span style="color: #667eea;">→</span> ')}
+                    </div>
                 </div>
             </div>
         `;
@@ -383,23 +415,21 @@ export class Vista {
         if (!panel) return;
 
         const html = `
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="text-sm text-gray-600">Intersecciones</p>
-                    <p class="text-2xl font-bold">${stats.totalIntersecciones}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">Aristas</p>
-                    <p class="text-2xl font-bold">${stats.totalAristas}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">Tráfico Promedio</p>
-                    <p class="text-2xl font-bold">${stats.traficoPromedio}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">Congestión</p>
-                    <p class="text-2xl font-bold">${stats.congestionGeneral}</p>
-                </div>
+            <div class="stat-box">
+                <div class="stat-value">${stats.totalIntersecciones}</div>
+                <div class="stat-label">Intersecciones</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">${stats.totalAristas}</div>
+                <div class="stat-label">Aristas</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">${stats.traficoPromedio}</div>
+                <div class="stat-label">Tráfico Prom.</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">${stats.congestionGeneral}</div>
+                <div class="stat-label">Congestión</div>
             </div>
         `;
 

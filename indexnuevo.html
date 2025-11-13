@@ -6,6 +6,423 @@
     <title>Sistema de Control de Tráfico - Arquitectura OOP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .btn-icon:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .canvas-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        #trafficCanvas {
+            width: 100%;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: crosshair;
+            background: #fafafa;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="number"],
+        input[type="range"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="range"] {
+            height: 8px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border-radius: 5px;
+            outline: none;
+            padding: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 176, 155, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ee0979, #ff6a00);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(238, 9, 121, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .coord-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-top: 15px;
+        }
+
+        .route-info {
+            background: #f0f7ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #667eea;
+        }
+
+        .route-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .route-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        #toastContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success { border-left: 4px solid #00b09b; }
+        .toast.error { border-left: 4px solid #ee0979; }
+        .toast.info { border-left: 4px solid #667eea; }
+        .toast.warning { border-left: 4px solid #ff6a00; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .button-group .btn {
+            flex: 1;
+        }
+
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        .grid-size-input {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .grid-size-input input {
+            flex: 1;
+        }
+
+        .grid-size-input .btn {
+            width: auto;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+    <!-- <style>
         @keyframes slide-in {
             from {
                 transform: translateX(100%);
@@ -79,10 +496,10 @@
             white-space: nowrap;
             margin-bottom: 4px;
         }
-    </style>
+    </style> -->
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-    <!-- Header -->
+<!-- <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <!-- Header 
     <header class="gradient-bg text-white shadow-2xl">
         <div class="container mx-auto px-6 py-6">
             <div class="flex items-center justify-between">
@@ -108,15 +525,15 @@
 
     <div class="container mx-auto px-6 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Panel de Control -->
+            <!-- Panel de Control 
             <div class="lg:col-span-1 space-y-6">
-                <!-- Estadísticas -->
+                <!-- Estadísticas 
                 <div class="card">
                     <h2 class="text-xl font-bold mb-4 text-gray-800">📊 Estadísticas</h2>
                     <div id="estadisticas"></div>
                 </div>
 
-                <!-- Control de Tráfico -->
+                <!-- Control de Tráfico
                 <div class="card">
                     <h2 class="text-xl font-bold mb-4 text-gray-800">🎛️ Control de Tráfico</h2>
                     
@@ -137,7 +554,7 @@
                     </div>
                 </div>
 
-                <!-- Importar/Exportar JSON -->
+                <!-- Importar/Exportar JSON 
                 <div class="card">
                     <h2 class="text-xl font-bold mb-4 text-gray-800">📁 Datos JSON</h2>
                     
@@ -166,7 +583,7 @@
                     </div>
                 </div>
 
-                <!-- Información -->
+                <!-- Información 
                 <div class="card">
                     <div id="infoPanel">
                         <h3 class="text-lg font-bold mb-2">ℹ️ Información</h3>
@@ -175,9 +592,9 @@
                 </div>
             </div>
 
-            <!-- Canvas y Controles -->
+            <!-- Canvas y Controles 
             <div class="lg:col-span-3 space-y-6">
-                <!-- Canvas -->
+                <!-- Canvas 
                 <div class="card p-0 overflow-hidden">
                     <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4">
                         <h2 class="text-xl font-bold">🗺️ Mapa de Tráfico</h2>
@@ -188,7 +605,7 @@
                     </div>
                 </div>
 
-                <!-- Planificación de Rutas -->
+                <!-- Planificación de Rutas 
                  <div class="mb-6 border-b pb-4">
                     <label for="gridSize" class="block text-sm font-medium text-gray-700 mb-2">
                         Dimensiones de la grilla: 
@@ -205,7 +622,7 @@
                     <h2 class="text-xl font-bold mb-4 text-gray-800">🎯 Planificación de Rutas</h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                        <!-- Input Manual -->
+                        <!-- Input Manual 
                         <div>
                             <h3 class="font-semibold mb-3 text-gray-700">Entrada Manual</h3>
                             <div class="grid grid-cols-2 gap-2 mb-3">
@@ -235,7 +652,7 @@
                             </button>
                         </div>
 
-                        <!-- Configuración -->
+                        <!-- Configuración 
                         <div>
                             <h3 class="font-semibold mb-3 text-gray-700">Configuración</h3>
                             <div class="mb-3">
@@ -257,11 +674,11 @@
                         </div>
                     </div>
 
-                    <!-- Resultado de la Ruta -->
+                    <!-- Resultado de la Ruta
                     <div id="rutaInfo" class="mt-4 p-4 bg-purple-50 rounded-lg"></div>
                 </div>
 
-                <!-- Ayuda -->
+                <!-- Ayuda 
                 <div class="card bg-gradient-to-br from-blue-50 to-purple-50">
                     <h2 class="text-xl font-bold mb-3 text-gray-800">💡 Instrucciones</h2>
                     <ul class="space-y-2 text-sm text-gray-700">
@@ -291,7 +708,7 @@
         </div>
     </div>
 
-    <!-- Modal de Comparación -->
+    <!-- Modal de Comparación 
     <div id="modalComparacion" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 p-6">
             <div class="flex justify-between items-center mb-4">
@@ -307,10 +724,10 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
+    <!-- Toast Container 
     <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <!-- Footer -->
+    <!-- Footer 
     <footer class="container mx-auto px-6 py-8 text-center text-gray-600">
         <p class="text-sm">
             Sistema de Control de Tráfico - Arquitectura OOP con JavaScript Modular
@@ -320,7 +737,153 @@
         </p>
     </footer>
 
-    <!-- Cargar módulos -->
+    <!-- Cargar módulos 
+    <script type="module" src="./Main.js"></script>
+</body> -->
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span style="font-size: 1.5em;">🚦</span>
+                Sistema de Control de Tráfico
+            </h1>
+            <div class="header-actions">
+                <button id="btnUndo" class="btn-icon" title="Deshacer (Ctrl+Z)">↶</button>
+                <button id="btnRedo" class="btn-icon" title="Rehacer (Ctrl+Y)">↷</button>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Configuración de Grilla -->
+                <div class="card">
+                    <h2>⚙️ Configuración</h2>
+                    <div class="input-group">
+                        <label>Tamaño de Grilla</label>
+                        <div class="grid-size-input">
+                            <input type="number" id="inputGridSize" min="3" max="20" value="6" placeholder="Ej: 6">
+                            <button id="btnAplicarGrid" class="btn btn-primary">Aplicar</button>
+                        </div>
+                        <small style="color: #666; margin-top: 5px; display: block;">Rango: 3-20 (Reiniciará el sistema)</small>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="card">
+                    <h2>📊 Estadísticas</h2>
+                    <div id="estadisticas" class="stats-grid"></div>
+                </div>
+
+                <!-- Control de Tráfico -->
+                <div class="card">
+                    <h2>🎛️ Control de Tráfico</h2>
+                    <div class="input-group">
+                        <label>Nivel Global: <span id="labelTrafico" style="color: #667eea; font-weight: bold;">50%</span></label>
+                        <input type="range" id="sliderTrafico" min="0" max="100" value="50">
+                    </div>
+                    <div class="button-group">
+                        <button id="btnTraficoAleatorio" class="btn btn-primary">🎲 Aleatorio</button>
+                        <button id="btnLimpiarTrafico" class="btn btn-danger">🧹 Limpiar</button>
+                    </div>
+                </div>
+
+                <!-- JSON -->
+                <div class="card">
+                    <h2>📁 Datos JSON</h2>
+                    <button id="btnImportarJSON" class="btn btn-success">📥 Importar</button>
+                    <input type="file" id="inputJSON" accept=".json" style="display: none;">
+                    <button id="btnExportarJSON" class="btn btn-secondary" style="margin-top: 10px;">📤 Exportar</button>
+                </div>
+
+                <!-- Información -->
+                <div class="card">
+                    <h2>ℹ️ Información</h2>
+                    <div id="infoPanel">
+                        <p style="color: #666;">Haz clic en una intersección para comenzar</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div>
+                <div class="canvas-container">
+                    <h2 style="color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        🗺️ Mapa de Tráfico
+                    </h2>
+                    <canvas id="trafficCanvas" width="1200" height="700"></canvas>
+                </div>
+
+                <!-- Planificación de Rutas -->
+                <div class="card" style="margin-top: 20px;">
+                    <h2>🎯 Planificación de Rutas</h2>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Entrada Manual -->
+                        <div>
+                            <h3 style="margin-bottom: 15px; color: #555;">Entrada Manual</h3>
+                            <div class="coord-inputs">
+                                <div class="input-group">
+                                    <label>Origen Fila</label>
+                                    <input type="number" id="inputOrigenRow" min="1" max="6" value="1">
+                                </div>
+                                <div class="input-group">
+                                    <label>Origen Col</label>
+                                    <input type="number" id="inputOrigenCol" min="1" max="6" value="1">
+                                </div>
+                                <div class="input-group">
+                                    <label>Destino Fila</label>
+                                    <input type="number" id="inputDestinoRow" min="1" max="6" value="6">
+                                </div>
+                                <div class="input-group">
+                                    <label>Destino Col</label>
+                                    <input type="number" id="inputDestinoCol" min="1" max="6" value="6">
+                                </div>
+                            </div>
+                            <button id="btnCalcularManual" class="btn btn-primary" style="margin-top: 15px;">
+                                🧮 Calcular Ruta
+                            </button>
+                        </div>
+
+                        <!-- Configuración -->
+                        <div>
+                            <h3 style="margin-bottom: 15px; color: #555;">Configuración</h3>
+                            <div class="input-group">
+                                <label>Algoritmo</label>
+                                <select id="algoritmoSelect">
+                                    <option value="dijkstra">Dijkstra (Clásico)</option>
+                                    <option value="astar">A* (Heurístico)</option>
+                                </select>
+                            </div>
+                            <div class="button-group">
+                                <button id="btnComparar" class="btn btn-secondary">⚖️ Comparar</button>
+                                <button id="btnResetear" class="btn btn-secondary">🔄 Resetear</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultado -->
+                    <div id="rutaInfo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Comparación -->
+    <div id="modalComparacion" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: #667eea;">⚖️ Comparación de Algoritmos</h2>
+                <button class="modal-close" onclick="document.getElementById('modalComparacion').classList.remove('active')">&times;</button>
+            </div>
+            <div id="contenidoComparacion"></div>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="document.getElementById('modalComparacion').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
     <script type="module" src="./Main.js"></script>
 </body>
 </html>

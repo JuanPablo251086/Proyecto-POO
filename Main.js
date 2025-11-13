@@ -1,13 +1,10 @@
 import { Controller } from './Controller.js';
 import { Vista } from './Vista.js';
 
-let globalController;
-let globalVista;
 /**
  * Clase Main - Punto de entrada y coordinador de la aplicación
  */
 class Main {
-    
     constructor() {
         this.controller = null;
         this.vista = null;
@@ -51,6 +48,26 @@ class Main {
      * Configura todos los event listeners de la UI
      */
     setupEventListeners() {
+        // Botón para aplicar cambio de tamaño de grilla
+        document.getElementById('btnAplicarGrid')?.addEventListener('click', () => {
+            const input = document.getElementById('inputGridSize');
+            const nuevoTamaño = parseInt(input.value);
+            
+            if (isNaN(nuevoTamaño) || nuevoTamaño < 3 || nuevoTamaño > 20) {
+                this.mostrarMensaje('El tamaño debe estar entre 3 y 20', 'error');
+                return;
+            }
+            
+            this.cambiarTamañoGrilla(nuevoTamaño);
+        });
+
+        // Enter en el input de tamaño de grilla
+        document.getElementById('inputGridSize')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('btnAplicarGrid')?.click();
+            }
+        });
+
         // Botones de tráfico
         document.getElementById('btnTraficoAleatorio')?.addEventListener('click', () => {
             this.controller.generarTraficoAleatorio();
@@ -257,36 +274,78 @@ class Main {
         const contenido = document.getElementById('contenidoComparacion');
 
         const html = `
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-blue-50 p-4 rounded">
-                        <h4 class="font-bold text-blue-900 mb-2">Dijkstra</h4>
-                        <p><strong>Tiempo:</strong> ${comparacion.dijkstra.tiempo.toFixed(2)}ms</p>
-                        <p><strong>Peso:</strong> ${comparacion.dijkstra.pesoTotal.toFixed(3)}</p>
-                        <p><strong>Nodos:</strong> ${comparacion.dijkstra.ruta.length}</p>
-                    </div>
-                    <div class="bg-purple-50 p-4 rounded">
-                        <h4 class="font-bold text-purple-900 mb-2">A*</h4>
-                        <p><strong>Tiempo:</strong> ${comparacion.aStar.tiempo.toFixed(2)}ms</p>
-                        <p><strong>Peso:</strong> ${comparacion.aStar.pesoTotal.toFixed(3)}</p>
-                        <p><strong>Nodos:</strong> ${comparacion.aStar.ruta.length}</p>
-                    </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; border-radius: 10px; color: white;">
+                    <h4 style="font-size: 1.2em; margin-bottom: 15px;">🔵 Dijkstra</h4>
+                    <p><strong>Tiempo:</strong> ${comparacion.dijkstra.tiempo.toFixed(2)}ms</p>
+                    <p><strong>Peso:</strong> ${comparacion.dijkstra.pesoTotal.toFixed(3)}</p>
+                    <p><strong>Nodos:</strong> ${comparacion.dijkstra.ruta.length}</p>
                 </div>
-                <div class="bg-gray-50 p-4 rounded">
-                    <h4 class="font-bold mb-2">Análisis</h4>
-                    <p>${comparacion.dijkstra.tiempo < comparacion.aStar.tiempo ? 
+                <div style="background: linear-gradient(135deg, #764ba2, #667eea); padding: 20px; border-radius: 10px; color: white;">
+                    <h4 style="font-size: 1.2em; margin-bottom: 15px;">🟣 A*</h4>
+                    <p><strong>Tiempo:</strong> ${comparacion.aStar.tiempo.toFixed(2)}ms</p>
+                    <p><strong>Peso:</strong> ${comparacion.aStar.pesoTotal.toFixed(3)}</p>
+                    <p><strong>Nodos:</strong> ${comparacion.aStar.ruta.length}</p>
+                </div>
+            </div>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea;">
+                <h4 style="font-size: 1.1em; margin-bottom: 10px; color: #667eea;">📊 Análisis</h4>
+                <p style="color: #555; line-height: 1.6;">
+                    ${comparacion.dijkstra.tiempo < comparacion.aStar.tiempo ? 
                         'Dijkstra fue más rápido en este caso.' : 
-                        'A* fue más rápido en este caso.'}</p>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Ambos algoritmos garantizan encontrar la ruta óptima, pero A* 
-                        puede ser más eficiente en grafos grandes gracias a su heurística.
-                    </p>
-                </div>
+                        'A* fue más rápido en este caso.'}
+                </p>
+                <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+                    Ambos algoritmos garantizan encontrar la ruta óptima, pero A* 
+                    puede ser más eficiente en grafos grandes gracias a su heurística.
+                </p>
             </div>
         `;
 
         contenido.innerHTML = html;
-        modal.classList.remove('hidden');
+        modal.classList.add('active');
+    }
+
+    /**
+     * Cambia el tamaño de la grilla y reinicia el sistema
+     */
+    cambiarTamañoGrilla(nuevoTamaño) {
+        if (this.controller.gridSize === nuevoTamaño) {
+            this.mostrarMensaje('Ya estás usando este tamaño de grilla', 'info');
+            return;
+        }
+
+        if (!confirm(`¿Cambiar el tamaño de la grilla a ${nuevoTamaño}x${nuevoTamaño}? Esto reiniciará el sistema.`)) {
+            // Restaurar el valor anterior en el input
+            document.getElementById('inputGridSize').value = this.controller.gridSize;
+            return;
+        }
+
+        // Actualizar los inputs de coordenadas
+        const inputs = ['inputOrigenRow', 'inputOrigenCol', 'inputDestinoRow', 'inputDestinoCol'];
+        inputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.max = nuevoTamaño;
+                // Ajustar valores si exceden el nuevo máximo
+                if (parseInt(input.value) > nuevoTamaño) {
+                    input.value = nuevoTamaño;
+                }
+            }
+        });
+
+        // Reiniciar con nuevo tamaño
+        this.controller = new Controller(nuevoTamaño);
+        this.controller.inicializar();
+
+        // Reinicializar vista
+        this.vista = new Vista(this.controller);
+        this.vista.inicializar('trafficCanvas');
+        
+        this.vista.render();
+        this.vista.actualizarEstadisticas();
+
+        this.mostrarMensaje(`Grilla cambiada a ${nuevoTamaño}x${nuevoTamaño}`, 'success');
     }
 
     /**
@@ -296,21 +355,22 @@ class Main {
         const container = document.getElementById('toastContainer');
         if (!container) return;
 
-        const colores = {
-            success: 'bg-green-500',
-            error: 'bg-red-500',
-            warning: 'bg-yellow-500',
-            info: 'bg-blue-500'
+        const iconos = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
         };
 
         const toast = document.createElement('div');
-        toast.className = `${colores[tipo]} text-white px-6 py-3 rounded-lg shadow-lg mb-2 animate-slide-in`;
-        toast.textContent = texto;
+        toast.className = `toast ${tipo}`;
+        toast.innerHTML = `<span style="font-size: 20px;">${iconos[tipo]}</span><span>${texto}</span>`;
 
         container.appendChild(toast);
 
         setTimeout(() => {
             toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
