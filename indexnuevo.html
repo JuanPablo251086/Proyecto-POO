@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Control de Tráfico - Arquitectura OOP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span style="font-size: 1.5em;">🚦</span>
+                Sistema de Control de Tráfico
+            </h1>
+            <div class="header-actions">
+                <button id="btnUndo" class="btn-icon" title="Deshacer (Ctrl+Z)">↶</button>
+                <button id="btnRedo" class="btn-icon" title="Rehacer (Ctrl+Y)">↷</button>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Configuración de Grilla -->
+                <div class="card">
+                    <h2>⚙️ Configuración</h2>
+                    <div class="input-group">
+                        <label>Tamaño de Grilla</label>
+                        <div class="grid-size-input">
+                            <input type="number" id="inputGridSize" min="3" max="20" value="6" placeholder="Ej: 6">
+                            <button id="btnAplicarGrid" class="btn btn-primary">Aplicar</button>
+                        </div>
+                        <small style="color: #666; margin-top: 5px; display: block;">Rango: 3-20 (Reiniciará el sistema)</small>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="card">
+                    <h2>📊 Estadísticas</h2>
+                    <div id="estadisticas" class="stats-grid"></div>
+                </div>
+
+                <!-- Control de Tráfico -->
+                <div class="card">
+                    <h2>🎛️ Control de Tráfico</h2>
+                    <div class="input-group">
+                        <label>Nivel Global: <span id="labelTrafico" style="color: #667eea; font-weight: bold;">50%</span></label>
+                        <input type="range" id="sliderTrafico" min="0" max="100" value="50">
+                    </div>
+                    <div class="button-group">
+                        <button id="btnTraficoAleatorio" class="btn btn-primary">🎲 Aleatorio</button>
+                        <button id="btnLimpiarTrafico" class="btn btn-danger">🧹 Limpiar</button>
+                    </div>
+                </div>
+
+                <!-- JSON -->
+                <div class="card">
+                    <h2>📁 Datos JSON</h2>
+                    <button id="btnImportarJSON" class="btn btn-success">📥 Importar</button>
+                    <input type="file" id="inputJSON" accept=".json" style="display: none;">
+                    <button id="btnExportarJSON" class="btn btn-secondary" style="margin-top: 10px;">📤 Exportar</button>
+                </div>
+
+                <!-- Información -->
+                <div class="card">
+                    <h2>ℹ️ Información</h2>
+                    <div id="infoPanel">
+                        <p style="color: #666;">Haz clic en una intersección para comenzar</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div>
+                <div class="canvas-container">
+                    <h2 style="color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        🗺️ Mapa de Tráfico
+                    </h2>
+                    <canvas id="trafficCanvas" width="1200" height="700"></canvas>
+                </div>
+
+                <!-- Planificación de Rutas -->
+                <div class="card" style="margin-top: 20px;">
+                    <h2>🎯 Planificación de Rutas</h2>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Entrada Manual -->
+                        <div>
+                            <h3 style="margin-bottom: 15px; color: #555;">Entrada Manual</h3>
+                            <div class="coord-inputs">
+                                <div class="input-group">
+                                    <label>Origen Fila</label>
+                                    <input type="number" id="inputOrigenRow" min="1" max="6" value="1">
+                                </div>
+                                <div class="input-group">
+                                    <label>Origen Col</label>
+                                    <input type="number" id="inputOrigenCol" min="1" max="6" value="1">
+                                </div>
+                                <div class="input-group">
+                                    <label>Destino Fila</label>
+                                    <input type="number" id="inputDestinoRow" min="1" max="6" value="6">
+                                </div>
+                                <div class="input-group">
+                                    <label>Destino Col</label>
+                                    <input type="number" id="inputDestinoCol" min="1" max="6" value="6">
+                                </div>
+                            </div>
+                            <button id="btnCalcularManual" class="btn btn-primary" style="margin-top: 15px;">
+                                🧮 Calcular Ruta
+                            </button>
+                        </div>
+
+                        <!-- Configuración -->
+                        <div>
+                            <h3 style="margin-bottom: 15px; color: #555;">Configuración</h3>
+                            <div class="input-group">
+                                <label>Algoritmo</label>
+                                <select id="algoritmoSelect">
+                                    <option value="dijkstra">Dijkstra (Clásico)</option>
+                                    <option value="astar">A* (Heurístico)</option>
+                                </select>
+                            </div>
+                            <div class="button-group">
+                                <button id="btnComparar" class="btn btn-secondary">⚖️ Comparar</button>
+                                <button id="btnResetear" class="btn btn-secondary">🔄 Resetear</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultado -->
+                    <div id="rutaInfo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Comparación -->
+    <div id="modalComparacion" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: #667eea;">⚖️ Comparación de Algoritmos</h2>
+                <button class="modal-close" onclick="document.getElementById('modalComparacion').classList.remove('active')">&times;</button>
+            </div>
+            <div id="contenidoComparacion"></div>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="document.getElementById('modalComparacion').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script type="module" src="./Main.js"></script>
+</body>
+</html>
